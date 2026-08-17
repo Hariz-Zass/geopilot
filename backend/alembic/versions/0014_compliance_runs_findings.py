@@ -1,0 +1,8 @@
+"""compliance runs and findings"""
+from alembic import op
+import sqlalchemy as sa
+revision='0014'; down_revision='0013'; branch_labels=None; depends_on=None
+def upgrade():
+ op.create_table('compliance_runs',sa.Column('id',sa.Uuid(),primary_key=True),sa.Column('project_id',sa.Uuid(),sa.ForeignKey('projects.id',ondelete='CASCADE'),nullable=False),sa.Column('site_id',sa.Uuid(),sa.ForeignKey('sites.id',ondelete='RESTRICT'),nullable=False),sa.Column('created_by_user_id',sa.Uuid(),sa.ForeignKey('users.id',ondelete='RESTRICT'),nullable=False),sa.Column('status',sa.String(24),nullable=False),sa.Column('deterministic',sa.Boolean(),nullable=False),sa.Column('limitations',sa.JSON(),nullable=False),sa.Column('created_at',sa.DateTime(timezone=True),nullable=False))
+ op.create_table('compliance_findings',sa.Column('id',sa.Uuid(),primary_key=True),sa.Column('run_id',sa.Uuid(),sa.ForeignKey('compliance_runs.id',ondelete='CASCADE'),nullable=False),sa.Column('project_id',sa.Uuid(),sa.ForeignKey('projects.id',ondelete='CASCADE'),nullable=False),sa.Column('site_id',sa.Uuid(),sa.ForeignKey('sites.id',ondelete='RESTRICT'),nullable=False),sa.Column('policy_criterion_id',sa.Uuid(),sa.ForeignKey('policy_criteria.id',ondelete='RESTRICT'),nullable=False),sa.Column('compliance_fact_id',sa.Uuid(),sa.ForeignKey('compliance_facts.id',ondelete='RESTRICT'),nullable=False),sa.Column('outcome',sa.String(64),nullable=False),sa.Column('evaluation',sa.JSON(),nullable=False),sa.Column('created_at',sa.DateTime(timezone=True),nullable=False))
+def downgrade(): op.drop_table('compliance_findings'); op.drop_table('compliance_runs')

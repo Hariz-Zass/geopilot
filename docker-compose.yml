@@ -1,0 +1,99 @@
+services:
+  db:
+    build:
+      context: ./infra/db
+      dockerfile: Dockerfile
+    container_name: geopilot-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-geopilot}
+      POSTGRES_USER: ${POSTGRES_USER:-geopilot}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me-local-only}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - geopilot_postgres_data:/var/lib/postgresql/data
+      - ./infra/db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-geopilot} -d ${POSTGRES_DB:-geopilot}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - geopilot
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: geopilot-backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_NAME: ${APP_NAME:-GeoPilot AI}
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://geopilot:change-me-local-only@db:5432/geopilot}
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - document_storage:/data/documents
+      - raster_storage:/data/rasters
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/system/ready', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - geopilot
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: geopilot-frontend
+    restart: unless-stopped
+    environment:
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+      VITE_APP_NAME: ${VITE_APP_NAME:-GeoPilot AI}
+      VITE_MAP_STYLE_URL: ${VITE_MAP_STYLE_URL:-https://demotiles.maplibre.org/styles/osm-bright-gl-style/style.json}
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - geopilot_frontend_node_modules:/app/node_modules
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    networks:
+      - geopilot
+
+networks:
+  geopilot:
+    name: geopilot-network
+
+volumes:
+  geopilot_postgres_data:
+    name: geopilot-postgres-data
+  geopilot_frontend_node_modules:
+    name: geopilot-frontend-node-modules
+  document_storage:
+    name: geopilot_document_storage
+  raster_storage:
+    name: geopilot_raster_storage

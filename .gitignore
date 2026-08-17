@@ -1,0 +1,99 @@
+﻿# ============================================================
+# GeoPilot AI Track B - Git Ignore
+# Judge-Ready Competition Branch
+# ============================================================
+
+# ----------------------------
+# Secrets / local environment
+# ----------------------------
+.env
+.env.*
+!.env.example
+
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+
+# ----------------------------
+# Python
+# ----------------------------
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.venv/
+venv/
+
+# ----------------------------
+# Node / frontend
+# ----------------------------
+node_modules/
+frontend/node_modules/
+frontend/dist/
+dist/
+coverage/
+
+# ----------------------------
+# IDE / OS
+# ----------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ----------------------------
+# Runtime / logs
+# ----------------------------
+*.log
+*.pid
+*.tmp
+*.temp
+
+# ----------------------------
+# GeoPilot generated evidence
+# ----------------------------
+artifacts/
+
+# Root diagnostic/audit output snapshots
+geopilot_*_audit*.txt
+geopilot_*_preflight*.txt
+geopilot_*_snapshot*.txt
+geopilot_*_source*.txt
+geopilot_*_debug*.txt
+trackb_debug_bundle.txt
+trackb_mainland_relocation_preflight.txt
+
+# Temporary extracted/source snapshots
+*_api_methods.txt
+*_api_types.txt
+*_styles.txt
+track_b_smart_*.py.txt
+test_track_b_*.py.txt
+SmartOrganizerControlledImport.tsx.txt
+phase_2c3b_controlled_commit_wrapper_preflight_v1.txt
+
+# ----------------------------
+# Local acceptance/demo data
+# ----------------------------
+urban_shah_alam_demo_dem.tif
+
+# ----------------------------
+# Backups
+# ----------------------------
+*.bak
+*.backup
+*.orig
+*~
+
+# Generated temporary GIS/map working files
+backend/tmp_bp7_maps/
+
+# TypeScript incremental build cache
+*.tsbuildinfo

@@ -1,0 +1,26 @@
+services:
+  db:
+    container_name: geopilot-v7-db
+
+  backend:
+    container_name: geopilot-v7-backend
+
+  frontend:
+    container_name: geopilot-v7-frontend
+
+networks:
+  geopilot:
+    name: geopilot-v7-network
+
+volumes:
+  geopilot_postgres_data:
+    name: geopilot-v7-postgres-data
+
+  geopilot_frontend_node_modules:
+    name: geopilot-v7-frontend-node-modules
+
+  document_storage:
+    name: geopilot-v7-document-storage
+
+  raster_storage:
+    name: geopilot-v7-raster-storage

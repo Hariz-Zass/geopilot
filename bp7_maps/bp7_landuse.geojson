@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "bp7_landuse",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{"type":"Feature","properties":{"fid":1,"landuse_type":"Institusi dan Kemudahan Masyarakat","landuse_code":"INSTITUSI","source_doc":"RT Subang Jaya 2035","source_page":"Rajah 5.88","bp_code":"BP7"},"geometry":{"type":"Polygon","coordinates":[[[101.699978242113346,3.004997531137287],[101.700040153326114,3.000044634116107],[101.705024005953675,3.000013678509725],[101.704962094740921,3.005121353562816],[101.700009197719737,3.00504396454686],[101.699978242113346,3.004997531137287]]]}}
+]
+}

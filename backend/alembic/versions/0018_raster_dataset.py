@@ -1,0 +1,7 @@
+"""raster dataset provenance"""
+from alembic import op
+import sqlalchemy as sa
+revision='0018'; down_revision='0017'; branch_labels=None; depends_on=None
+def upgrade():
+ op.create_table('raster_datasets',sa.Column('id',sa.Uuid(),primary_key=True),sa.Column('project_id',sa.Uuid(),sa.ForeignKey('projects.id',ondelete='CASCADE'),nullable=False),sa.Column('site_id',sa.Uuid(),sa.ForeignKey('sites.id',ondelete='RESTRICT')),sa.Column('created_by_user_id',sa.Uuid(),sa.ForeignKey('users.id',ondelete='RESTRICT'),nullable=False),sa.Column('name',sa.String(255),nullable=False),sa.Column('source_kind',sa.String(32),nullable=False),sa.Column('provider',sa.String(80)),sa.Column('collection',sa.String(120)),sa.Column('scene_id',sa.String(255)),sa.Column('acquisition_datetime',sa.String(64)),sa.Column('crs',sa.String(80),nullable=False),sa.Column('width',sa.Integer(),nullable=False),sa.Column('height',sa.Integer(),nullable=False),sa.Column('band_count',sa.Integer(),nullable=False),sa.Column('band_names',sa.JSON(),nullable=False),sa.Column('pixel_size',sa.JSON(),nullable=False),sa.Column('bounds',sa.JSON(),nullable=False),sa.Column('nodata',sa.JSON(),nullable=False),sa.Column('source_uri',sa.Text()),sa.Column('checksum_sha256',sa.String(64),nullable=False),sa.Column('provenance',sa.JSON(),nullable=False),sa.Column('status',sa.String(24),nullable=False),sa.Column('is_archived',sa.Boolean(),nullable=False),sa.Column('created_at',sa.DateTime(timezone=True),nullable=False))
+def downgrade(): op.drop_table('raster_datasets')
