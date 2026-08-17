@@ -22,6 +22,18 @@ NUMERIC_PATTERN = re.compile(
     r"(?<![A-Za-z])(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?"
 )
 
+UUID_PATTERN = re.compile(
+    r"^[0-9a-fA-F]{8}-"
+    r"[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{4}-"
+    r"[0-9a-fA-F]{12}$"
+)
+
+HEX_IDENTIFIER_PATTERN = re.compile(
+    r"^[0-9a-fA-F]{32,}$"
+)
+
 
 def evidence_context(
     items: list[ToolEvidence],
@@ -88,6 +100,15 @@ def _payload_numeric_tokens(
             return
 
         if isinstance(value, str):
+            # UUID/hash values identify evidence; they are not
+            # planning measurements and their internal digits
+            # must not become numeric grounding tokens.
+            if (
+                UUID_PATTERN.fullmatch(value)
+                or HEX_IDENTIFIER_PATTERN.fullmatch(value)
+            ):
+                return
+
             for match in NUMERIC_PATTERN.findall(
                 value
             ):
@@ -162,31 +183,35 @@ def validate_synthesis(
                     claim.replace(",", "")
                 )
 
-                if "." in claim:
-                    decimal_places = len(
-                        claim.split(".", 1)[1]
-                    )
+                # Match legitimate rounding to the precision
+                # stated by the synthesis. Integer claims use
+                # zero decimal places, so 49.999999939 -> 50.
+                decimal_places = (
+                    len(claim.split(".", 1)[1])
+                    if "." in claim
+                    else 0
+                )
 
-                    quantum = Decimal(1).scaleb(
-                        -decimal_places
-                    )
+                quantum = Decimal(1).scaleb(
+                    -decimal_places
+                )
 
-                    for token in allowed:
-                        try:
-                            evidence_decimal = Decimal(
-                                token
-                            )
-                        except InvalidOperation:
-                            continue
+                for token in allowed:
+                    try:
+                        evidence_decimal = Decimal(
+                            token
+                        )
+                    except InvalidOperation:
+                        continue
 
-                        if (
-                            evidence_decimal.quantize(
-                                quantum
-                            )
-                            == claim_decimal
-                        ):
-                            rounded_match = True
-                            break
+                    if (
+                        evidence_decimal.quantize(
+                            quantum
+                        )
+                        == claim_decimal
+                    ):
+                        rounded_match = True
+                        break
 
             except InvalidOperation:
                 rounded_match = False
