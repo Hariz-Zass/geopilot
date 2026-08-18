@@ -1,0 +1,57 @@
+@echo off
+setlocal EnableExtensions
+cd /d "%~dp0"
+
+echo ============================================================
+echo GeoPilot Track B Numeric Allowlist Fix V2
+echo Strict grounding preserved - no numeric whitelist relaxation
+echo ============================================================
+echo.
+
+docker compose config --services >nul 2>&1
+if errorlevel 1 (
+  echo BLOCKED: run from geopilot_v7 project root.
+  exit /b 1
+)
+
+echo [1/5] Applying V2 controlled patch...
+docker compose run --rm --no-deps -v "%CD%:/workspace" -w /workspace backend python -c "import base64;exec(base64.b64decode('CmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAppbXBvcnQgc2h1dGlsCmZyb20gZGF0ZXRpbWUgaW1wb3J0IGRhdGV0aW1lCgpST09UID0gUGF0aCgnL3dvcmtzcGFjZScpCkFJID0gUk9PVCAvICdiYWNrZW5kL2FwcC9zZXJ2aWNlcy90cmFja19iX2FpLnB5JwpURVNUUyA9IFJPT1QgLyAnYmFja2VuZC90ZXN0cy90ZXN0X3RyYWNrX2JfaGFja2F0aG9uLnB5JwoKaWYgbm90IEFJLmlzX2ZpbGUoKSBvciBub3QgVEVTVFMuaXNfZmlsZSgpOgogICAgcmFpc2UgU3lzdGVtRXhpdCgnUEFUQ0ggQkxPQ0tFRDogZXhwZWN0ZWQgVHJhY2sgQiBmaWxlcyBub3QgZm91bmQuJykKCnN0YW1wID0gZGF0ZXRpbWUubm93KCkuc3RyZnRpbWUoJyVZJW0lZF8lSCVNJVMnKQpiYWNrdXAgPSBST09UIC8gJ2FydGlmYWN0cycgLyBmJ3RyYWNrYl9udW1lcmljX2FsbG93bGlzdF9iYWNrdXBfe3N0YW1wfScKYmFja3VwLm1rZGlyKHBhcmVudHM9VHJ1ZSwgZXhpc3Rfb2s9VHJ1ZSkKc2h1dGlsLmNvcHkyKEFJLCBiYWNrdXAgLyBBSS5uYW1lKQpzaHV0aWwuY29weTIoVEVTVFMsIGJhY2t1cCAvIFRFU1RTLm5hbWUpCnByaW50KCdCQUNLVVA6JywgYmFja3VwKQoKdGV4dCA9IEFJLnJlYWRfdGV4dChlbmNvZGluZz0ndXRmLTgnKQptYXJrZXIgPSAnIyBUUkFDS0JfTlVNRVJJQ19BTExPV0xJU1RfVjInCgppZiBtYXJrZXIgbm90IGluIHRleHQ6CiAgICBhbmNob3IgPSAnZGVmIF92YWxpZGF0ZV9ub19pbnZlbnRlZF9udW1iZXJzKHBheWxvYWQ6IGRpY3Rbc3RyLCBBbnldLCBhbmFseXNpczogZGljdFtzdHIsIEFueV0pIC0+IE5vbmU6XG4nCiAgICBoZWxwZXIgPSAnJycjIFRSQUNLQl9OVU1FUklDX0FMTE9XTElTVF9WMgpkZWYgX251bWVyaWNfYWxsb3dsaXN0X2Jsb2NrKCphbmFseXNlczogZGljdFtzdHIsIEFueV0pIC0+IHN0cjoKICAgIGFsbG93ZWQ6IHNldFtzdHJdID0gc2V0KCkKICAgIGZvciBhbmFseXNpcyBpbiBhbmFseXNlczoKICAgICAgICBhbGxvd2VkIHw9IF9hbGxvd2VkX251bWVyaWNfdG9rZW5zKGFuYWx5c2lzKQogICAgb3JkZXJlZCA9IHNvcnRlZChhbGxvd2VkLCBrZXk9bGFtYmRhIHg6IChsZW4oeCksIHgpKQogICAgcmV0dXJuICgKICAgICAgICAiXFxuXFxuU1RSSUNUIE5VTUVSSUMgT1VUUFVUIENPTlRSQUNUOlxcbiIKICAgICAgICAiQW55IG51bWVyaWMgdG9rZW4gY29udGFpbmluZyBkaWdpdHMgaW4geW91ciBKU09OIG5hcnJhdGl2ZSBNVVNUIGJlIGNvcGllZCBleGFjdGx5ICIKICAgICAgICAiZnJvbSB0aGUgZm9sbG93aW5nIGFsbG93bGlzdC4gSWYgYSBudW1iZXIgeW91IHdhbnQgdG8gbWVudGlvbiBpcyBub3QgcHJlc2VudCwgcmV3cml0ZSAiCiAgICAgICAgInRoZSBzZW50ZW5jZSBxdWFsaXRhdGl2ZWx5IHdpdGhvdXQgdGhhdCBudW1iZXIuIERvIE5PVCBtZW50aW9uIGdlbmVyaWMgTkRWSSBzY2FsZSAiCiAgICAgICAgImJvdW5kcywgemVyby9vbmUgcmVmZXJlbmNlIHZhbHVlcywgdGhyZXNob2xkcywgbnVtYmVyZWQgc3RlcHMsIHJhbmtzLCBjb3VudHMsIG9yIG90aGVyICIKICAgICAgICAibnVtZXJpYyBjb252ZW50aW9ucyB1bmxlc3MgdGhhdCBleGFjdCB0b2tlbiBhcHBlYXJzIGJlbG93LiBCZWZvcmUgcmV0dXJuaW5nIEpTT04sIHNjYW4gIgogICAgICAgICJldmVyeSBuYXJyYXRpdmUgc3RyaW5nIGFuZCByZW1vdmUgb3IgcmV3cml0ZSBhbnkgZGlnaXQgdG9rZW4gbm90IGluIHRoaXMgYWxsb3dsaXN0LlxcbiIKICAgICAgICAiQUxMT1dFRF9OVU1FUklDX1RPS0VOUzogIiArICIsICIuam9pbihvcmRlcmVkKQogICAgKQoKCicnJwogICAgaWYgYW5jaG9yIG5vdCBpbiB0ZXh0OgogICAgICAgIHJhaXNlIFN5c3RlbUV4aXQoJ1BBVENIIEJMT0NLRUQ6IHZhbGlkYXRvciBhbmNob3Igbm90IGZvdW5kLicpCiAgICB0ZXh0ID0gdGV4dC5yZXBsYWNlKGFuY2hvciwgaGVscGVyICsgYW5jaG9yLCAxKQoKICAgIHBhaXJzID0gWwogICAgICAgICgKICAgICAgICAgICAgJyAgICBpbnB1dF90ZXh0ID0gIkNMT1NFRC1FVklERU5DRSBUUkFDSyBCIEZBQ1RTOlxcbiIgKyBqc29uLmR1bXBzKGZhY3RzLCBlbnN1cmVfYXNjaWk9RmFsc2UsIGluZGVudD0yLCBkZWZhdWx0PXN0cilcbicsCiAgICAgICAgICAgICcgICAgaW5wdXRfdGV4dCA9ICgiQ0xPU0VELUVWSURFTkNFIFRSQUNLIEIgRkFDVFM6XFxuIiArIGpzb24uZHVtcHMoZmFjdHMsIGVuc3VyZV9hc2NpaT1GYWxzZSwgaW5kZW50PTIsIGRlZmF1bHQ9c3RyKSArIF9udW1lcmljX2FsbG93bGlzdF9ibG9jayhhbmFseXNpcykpXG4nCiAgICAgICAgKSwKICAgICAgICAoCiAgICAgICAgICAgICcgICAgaW5wdXRfdGV4dCA9ICJDTE9TRUQtRVZJREVOQ0UgVVJCQU4vUlVSQUwgRkFDVFM6XFxuIiArIGpzb24uZHVtcHMoeyJ1cmJhbiI6IGZhY3RzKHVyYmFuKSwgInJ1cmFsIjogZmFjdHMocnVyYWwpfSwgZW5zdXJlX2FzY2lpPUZhbHNlLCBpbmRlbnQ9MiwgZGVmYXVsdD1zdHIpXG4nLAogICAgICAgICAgICAnICAgIGlucHV0X3RleHQgPSAoIkNMT1NFRC1FVklERU5DRSBVUkJBTi9SVVJBTCBGQUNUUzpcXG4iICsganNvbi5kdW1wcyh7InVyYmFuIjogZmFjdHModXJiYW4pLCAicnVyYWwiOiBmYWN0cyhydXJhbCl9LCBlbnN1cmVfYXNjaWk9RmFsc2UsIGluZGVudD0yLCBkZWZhdWx0PXN0cikgKyBfbnVtZXJpY19hbGxvd2xpc3RfYmxvY2sodXJiYW4sIHJ1cmFsKSlcbicKICAgICAgICApLAogICAgICAgICgKICAgICAgICAgICAgJyAgICBpbnB1dF90ZXh0ID0gIkNMT1NFRC1FVklERU5DRSBUUkFDSyBCIERFQ0lTSU9OIEZBQ1RTOlxcbiIgKyBqc29uLmR1bXBzKGZhY3RzLCBlbnN1cmVfYXNjaWk9RmFsc2UsIGluZGVudD0yLCBkZWZhdWx0PXN0cilcbicsCiAgICAgICAgICAgICcgICAgaW5wdXRfdGV4dCA9ICgiQ0xPU0VELUVWSURFTkNFIFRSQUNLIEIgREVDSVNJT04gRkFDVFM6XFxuIiArIGpzb24uZHVtcHMoZmFjdHMsIGVuc3VyZV9hc2NpaT1GYWxzZSwgaW5kZW50PTIsIGRlZmF1bHQ9c3RyKSArIF9udW1lcmljX2FsbG93bGlzdF9ibG9jayhhbmFseXNpcykpXG4nCiAgICAgICAgKQogICAgXQogICAgZm9yIG9sZCwgbmV3IGluIHBhaXJzOgogICAgICAgIGlmIG9sZCBub3QgaW4gdGV4dDoKICAgICAgICAgICAgcmFpc2UgU3lzdGVtRXhpdCgnUEFUQ0ggQkxPQ0tFRDogaW5wdXQgbWFya2VyIG5vdCBmb3VuZC4nKQogICAgICAgIHRleHQgPSB0ZXh0LnJlcGxhY2Uob2xkLCBuZXcsIDEpCgogICAgQUkud3JpdGVfdGV4dCh0ZXh0LCBlbmNvZGluZz0ndXRmLTgnLCBuZXdsaW5lPSdcbicpCiAgICBwcmludCgnUEFUQ0hFRCB0cmFja19iX2FpLnB5JykKZWxzZToKICAgIHByaW50KCdWMiBQQVRDSCBBTFJFQURZIFBSRVNFTlQnKQoKdGVzdHMgPSBURVNUUy5yZWFkX3RleHQoZW5jb2Rpbmc9J3V0Zi04JykKdGVzdF9tYXJrZXIgPSAnZGVmIHRlc3RfdHJhY2tfYl9udW1lcmljX2FsbG93bGlzdF9leGNsdWRlc19pbnZlbnRlZF96ZXJvX2FuZF9pbmNsdWRlc19ncm91bmRlZF9yb3VuZGluZygpOicKaWYgdGVzdF9tYXJrZXIgbm90IGluIHRlc3RzOgogICAgdGVzdHMgKz0gJycnCgpkZWYgdGVzdF90cmFja19iX251bWVyaWNfYWxsb3dsaXN0X2V4Y2x1ZGVzX2ludmVudGVkX3plcm9fYW5kX2luY2x1ZGVzX2dyb3VuZGVkX3JvdW5kaW5nKCk6CiAgICBmcm9tIGFwcC5zZXJ2aWNlcy50cmFja19iX2FpIGltcG9ydCBfbnVtZXJpY19hbGxvd2xpc3RfYmxvY2sKICAgIGFuYWx5c2lzID0gewogICAgICAgICJjaGFuZ2VkX3BlcmNlbnRhZ2UiOiAxNS4yNjQ4OTI1NzgxMjUsCiAgICAgICAgImNoYW5nZWRfYXJlYV9oZWN0YXJlcyI6IDI1LjAxLAogICAgICAgICJ1c2FibGVfY292ZXJhZ2VfcGVyY2VudCI6IDEwMC4wLAogICAgICAgICJjaGFuZ2VkX3BpeGVsX2NvdW50IjogMjUwMSwKICAgICAgICAidmFsaWRfcGl4ZWxfY291bnQiOiAxNjM4NCwKICAgICAgICAibWVhbl9iZWZvcmUiOiAwLjQ2OTk3Njk5MTQxNTAyMzgsCiAgICAgICAgIm1lYW5fYWZ0ZXIiOiAwLjM4MjQ4MDE0NDUwMDczMjQsCiAgICAgICAgImJlZm9yZV9kYXRldGltZSI6ICIyMDI2LTAxLTE1VDAwOjAwOjAwWiIsCiAgICAgICAgImFmdGVyX2RhdGV0aW1lIjogIjIwMjYtMDctMTVUMDA6MDA6MDBaIiwKICAgIH0KICAgIGJsb2NrID0gX251bWVyaWNfYWxsb3dsaXN0X2Jsb2NrKGFuYWx5c2lzKQogICAgYXNzZXJ0ICIwLjQ2OTk4IiBpbiBibG9jawogICAgdG9rZW5zID0gYmxvY2suc3BsaXQoIkFMTE9XRURfTlVNRVJJQ19UT0tFTlM6ICIsIDEpWzFdLnNwbGl0KCIsICIpCiAgICBhc3NlcnQgIjAiIG5vdCBpbiB0b2tlbnMKICAgIGFzc2VydCAiMjUwMSIgaW4gdG9rZW5zCiAgICBhc3NlcnQgIjI1LjAxIiBpbiB0b2tlbnMKJycnCiAgICBURVNUUy53cml0ZV90ZXh0KHRlc3RzLCBlbmNvZGluZz0ndXRmLTgnLCBuZXdsaW5lPSdcbicpCiAgICBwcmludCgnQVBQRU5ERUQgVjIgcmVncmVzc2lvbiB0ZXN0JykKCnByaW50KCdWMiBQQVRDSCBTVEVQIENPTVBMRVRFJykK'))"
+if errorlevel 1 goto :fail
+
+echo.
+echo [2/5] Compiling...
+docker compose run --rm --no-deps -v "%CD%:/workspace" -w /workspace/backend backend python -m compileall app/services/track_b_ai.py tests/test_track_b_hackathon.py
+if errorlevel 1 goto :fail
+
+echo.
+echo [3/5] Running regression suite...
+docker compose run --rm --no-deps -v "%CD%:/workspace" -w /workspace/backend -e PYTHONPATH=/workspace/backend backend pytest -q tests/test_track_b_hackathon.py
+if errorlevel 1 goto :fail
+
+echo.
+echo [4/5] Recreating backend...
+docker compose up -d --force-recreate backend
+if errorlevel 1 goto :fail
+
+echo.
+echo [5/5] Runtime verification...
+timeout /t 4 /nobreak >nul
+docker compose exec -T backend python -c "from app.core.config import get_settings; from app.services.provider_resilience import _provider_order; from app.services.track_b_ai import _numeric_allowlist_block; s=get_settings(); print('PRIMARY=',s.ai_provider); print('FALLBACK=',s.ai_fallback_provider); print('ORDER=',[p.name for p in _provider_order(s)]); print('NUMERIC_ALLOWLIST_PATCH=V2')"
+if errorlevel 1 goto :fail
+
+echo.
+echo ============================================================
+echo V2 PATCH GATE PASS
+echo Run ONE Full Track B Mission in the UI.
+echo If not 7/7, do not rerun; share Mission Execution Trace.
+echo ============================================================
+exit /b 0
+
+:fail
+echo.
+echo ============================================================
+echo V2 PATCH GATE FAILED
+echo STOP. Backup is under artifacts\trackb_numeric_allowlist_backup_*
+echo Share this terminal output before doing anything else.
+echo ============================================================
+exit /b 1

@@ -1,0 +1,2 @@
+﻿print("FILE_EXECUTION_OK")
+print("PYTHON_FILE_PROBE=PASS")

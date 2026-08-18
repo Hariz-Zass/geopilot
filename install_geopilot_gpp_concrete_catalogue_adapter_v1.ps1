@@ -1,0 +1,48 @@
+﻿$ErrorActionPreference="Stop"
+Set-StrictMode -Version Latest
+$Root=Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $Root
+$S="backend\app\services\planning_document_acquisition.py"
+if (!(Test-Path $S)) { throw "Missing acquisition service." }
+$Stamp=Get-Date -Format "yyyyMMdd_HHmmss"
+$Backup="artifacts\gpp_concrete_catalogue_adapter_v1_backup_$Stamp"
+New-Item -ItemType Directory -Force -Path $Backup | Out-Null
+Copy-Item $S "$Backup\planning_document_acquisition.py"
+Write-Host "============================================================"
+Write-Host "GeoPilot GPP Concrete Catalogue Adapter V1"
+Write-Host "============================================================"
+Write-Host "BACKUP: $Backup"
+Write-Host "[1] Apply adapter"
+$B64="ZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCnA9UGF0aCgiL2FwcC9hcHAvc2VydmljZXMvcGxhbm5pbmdfZG9jdW1lbnRfYWNxdWlzaXRpb24ucHkiKQpzPXAucmVhZF90ZXh0KGVuY29kaW5nPSJ1dGYtOC1zaWciKQppZiAiZnJvbSBodG1sLnBhcnNlciBpbXBvcnQgSFRNTFBhcnNlciIgbm90IGluIHM6CiAgICBzPXMucmVwbGFjZSgiZnJvbSB1cmxsaWIucGFyc2UgaW1wb3J0IHVybGpvaW4sIHVybHBhcnNlIiwiZnJvbSBodG1sLnBhcnNlciBpbXBvcnQgSFRNTFBhcnNlclxuZnJvbSB1cmxsaWIucGFyc2UgaW1wb3J0IHBhcnNlX3FzLCB1cmxlbmNvZGUsIHVybGpvaW4sIHVybHBhcnNlLCB1cmx1bnBhcnNlIiwxKQpzdGFydD1zLmluZGV4KCJjbGFzcyBQbGFuTWFsYXlzaWFPZmZpY2lhbFByb3ZpZGVyOiIpCmNvZGU9ciIiIgpjbGFzcyBfQ2F0YWxvZ3VlTGlua1BhcnNlcihIVE1MUGFyc2VyKToKICAgIGRlZiBfX2luaXRfXyhzZWxmKToKICAgICAgICBzdXBlcigpLl9faW5pdF9fKGNvbnZlcnRfY2hhcnJlZnM9VHJ1ZSk7IHNlbGYubGlua3M9W107IHNlbGYuaHJlZj1Ob25lOyBzZWxmLnRleHQ9W10KICAgIGRlZiBoYW5kbGVfc3RhcnR0YWcoc2VsZiwgdGFnLCBhdHRycyk6CiAgICAgICAgaWYgdGFnLmNhc2Vmb2xkKCk9PSJhIjogc2VsZi5ocmVmPWRpY3QoYXR0cnMpLmdldCgiaHJlZiIpOyBzZWxmLnRleHQ9W10KICAgIGRlZiBoYW5kbGVfZGF0YShzZWxmLCBkYXRhKToKICAgICAgICBpZiBzZWxmLmhyZWYgaXMgbm90IE5vbmU6IHNlbGYudGV4dC5hcHBlbmQoZGF0YSkKICAgIGRlZiBoYW5kbGVfZW5kdGFnKHNlbGYsIHRhZyk6CiAgICAgICAgaWYgdGFnLmNhc2Vmb2xkKCk9PSJhIiBhbmQgc2VsZi5ocmVmIGlzIG5vdCBOb25lOgogICAgICAgICAgICBzZWxmLmxpbmtzLmFwcGVuZCgoIiAiLmpvaW4oIiIuam9pbihzZWxmLnRleHQpLnNwbGl0KCkpLHNlbGYuaHJlZikpOyBzZWxmLmhyZWY9Tm9uZTsgc2VsZi50ZXh0PVtdCgpkZWYgX25vcm1hbGl6ZWRfdXJpKHVyaSk6CiAgICB4PXVybHBhcnNlKHVyaSk7IHJldHVybiB1cmx1bnBhcnNlKCh4LnNjaGVtZS5jYXNlZm9sZCgpLHgubmV0bG9jLmNhc2Vmb2xkKCkseC5wYXRoLCIiLHgucXVlcnksIiIpKQoKZGVmIF93aXRoX3BhZ2UodXJpLHBhZ2UpOgogICAgeD11cmxwYXJzZSh1cmkpOyBxPXBhcnNlX3FzKHgucXVlcnksa2VlcF9ibGFua192YWx1ZXM9VHJ1ZSk7IHFbInBhZ2UiXT1bc3RyKHBhZ2UpXQogICAgcmV0dXJuIHVybHVucGFyc2UoeC5fcmVwbGFjZShxdWVyeT11cmxlbmNvZGUocSxkb3NlcT1UcnVlKSkpCgpjbGFzcyBQbGFuTWFsYXlzaWFPZmZpY2lhbFByb3ZpZGVyOgogICAgbmFtZT0icGxhbm1hbGF5c2lhX29mZmljaWFsIgogICAgR1BQX0NBVEFMT0dVRV9VUkw9Imh0dHBzOi8vd3d3LnBsYW5tYWxheXNpYS5nb3YubXkvbWFpbi9kb2N1bWVudC1saXN0P3R5cGU9Z2FyaXMtcGFuZHVhbi1wZXJhbmNhbmdhbiIKICAgIE1BWF9HUFBfUEFHRVM9MjAKICAgIGRlZiBfX2luaXRfXyhzZWxmLCosY2xpZW50PU5vbmUpOiBzZWxmLl9jbGllbnQ9Y2xpZW50CiAgICBkZWYgX2dldF9odG1sKHNlbGYsdXJpKToKICAgICAgICB2YWxpZGF0ZV9vZmZpY2lhbF9zb3VyY2VfdXJpKHVyaSkKICAgICAgICBvd249c2VsZi5fY2xpZW50IGlzIE5vbmUKICAgICAgICBjPXNlbGYuX2NsaWVudCBvciBodHRweC5DbGllbnQodGltZW91dD1odHRweC5UaW1lb3V0KDMwLjApLGZvbGxvd19yZWRpcmVjdHM9RmFsc2UsaGVhZGVycz17IlVzZXItQWdlbnQiOiJHZW9QaWxvdEFJLzEuMCBvZmZpY2lhbC1wbGFubmluZy1kb2N1bWVudC1kaXNjb3ZlcnkiLCJBY2NlcHQiOiJ0ZXh0L2h0bWwsYXBwbGljYXRpb24veGh0bWwreG1sIn0pCiAgICAgICAgY3VycmVudD11cmkKICAgICAgICB0cnk6CiAgICAgICAgICAgIGZvciBfIGluIHJhbmdlKE1BWF9SRURJUkVDVFMrMSk6CiAgICAgICAgICAgICAgICByPWMuZ2V0KGN1cnJlbnQpCiAgICAgICAgICAgICAgICBpZiByLnN0YXR1c19jb2RlIGluIHszMDEsMzAyLDMwMywzMDcsMzA4fToKICAgICAgICAgICAgICAgICAgICBsb2M9ci5oZWFkZXJzLmdldCgibG9jYXRpb24iKQogICAgICAgICAgICAgICAgICAgIGlmIG5vdCBsb2M6IHJhaXNlIFBsYW5uaW5nRG9jdW1lbnRBY3F1aXNpdGlvbkVycm9yKCJPZmZpY2lhbCBjYXRhbG9ndWUgcmVkaXJlY3QgbWlzc2luZyBMb2NhdGlvbi4iKQogICAgICAgICAgICAgICAgICAgIGN1cnJlbnQ9dmFsaWRhdGVfb2ZmaWNpYWxfc291cmNlX3VyaSh1cmxqb2luKGN1cnJlbnQsbG9jKSk7IGNvbnRpbnVlCiAgICAgICAgICAgICAgICByLnJhaXNlX2Zvcl9zdGF0dXMoKQogICAgICAgICAgICAgICAgaWYgImh0bWwiIG5vdCBpbiByLmhlYWRlcnMuZ2V0KCJjb250ZW50LXR5cGUiLCIiKS5jYXNlZm9sZCgpOiByYWlzZSBQbGFubmluZ0RvY3VtZW50QWNxdWlzaXRpb25FcnJvcigiT2ZmaWNpYWwgR1BQIGNhdGFsb2d1ZSBkaWQgbm90IHJldHVybiBIVE1MLiIpCiAgICAgICAgICAgICAgICByZXR1cm4gci50ZXh0LGN1cnJlbnQKICAgICAgICAgICAgcmFpc2UgUGxhbm5pbmdEb2N1bWVudEFjcXVpc2l0aW9uRXJyb3IoIk9mZmljaWFsIEdQUCBjYXRhbG9ndWUgZXhjZWVkZWQgcmVkaXJlY3QgbGltaXQuIikKICAgICAgICBleGNlcHQgaHR0cHguSFRUUEVycm9yIGFzIGV4YzoKICAgICAgICAgICAgcmFpc2UgUGxhbm5pbmdEb2N1bWVudEFjcXVpc2l0aW9uRXJyb3IoIk9mZmljaWFsIEdQUCBjYXRhbG9ndWUgY291bGQgbm90IGJlIHJldHJpZXZlZC4iKSBmcm9tIGV4YwogICAgICAgIGZpbmFsbHk6CiAgICAgICAgICAgIGlmIG93bjogYy5jbG9zZSgpCiAgICBkZWYgX2V4dHJhY3Qoc2VsZixodG1sLGJhc2UpOgogICAgICAgIHBhcnNlcj1fQ2F0YWxvZ3VlTGlua1BhcnNlcigpOyBwYXJzZXIuZmVlZChodG1sKTsgb3V0PVtdCiAgICAgICAgZm9yIHRpdGxlLGhyZWYgaW4gcGFyc2VyLmxpbmtzOgogICAgICAgICAgICB0aXRsZT0iICIuam9pbih0aXRsZS5zcGxpdCgpKQogICAgICAgICAgICBpZiBub3QgdGl0bGUgb3Igbm90IGhyZWY6IGNvbnRpbnVlCiAgICAgICAgICAgIHVyaT11cmxqb2luKGJhc2UsaHJlZikKICAgICAgICAgICAgaWYgbm90IHVybHBhcnNlKHVyaSkucGF0aC5jYXNlZm9sZCgpLmVuZHN3aXRoKCIucGRmIik6IGNvbnRpbnVlCiAgICAgICAgICAgIGlmICJncHAiIG5vdCBpbiB0aXRsZS5jYXNlZm9sZCgpIGFuZCAiZ2FyaXMgcGFuZHVhbiIgbm90IGluIHRpdGxlLmNhc2Vmb2xkKCk6IGNvbnRpbnVlCiAgICAgICAgICAgIHRyeTogdmFsaWRhdGVfb2ZmaWNpYWxfc291cmNlX3VyaSh1cmkpCiAgICAgICAgICAgIGV4Y2VwdCBQbGFubmluZ0RvY3VtZW50QWNxdWlzaXRpb25FcnJvcjogY29udGludWUKICAgICAgICAgICAgb3V0LmFwcGVuZChQbGFubmluZ0RvY3VtZW50Q2FuZGlkYXRlKGRvY3VtZW50X2NsYXNzPSJHUFAiLHRpdGxlPXRpdGxlLGF1dGhvcml0eT0iUExBTk1hbGF5c2lhIixqdXJpc2RpY3Rpb249Tm9uZSxzb3VyY2VfdXJpPXVyaSxwcm92aWRlcj1zZWxmLm5hbWUsbWV0YWRhdGE9eyJjYXRhbG9ndWVfdXJpIjpiYXNlLCJjYXRhbG9ndWVfdGl0bGUiOnRpdGxlLCJkaXNjb3ZlcnlfbWV0aG9kIjoib2ZmaWNpYWxfY2F0YWxvZ3VlX2xpbmsifSkpCiAgICAgICAgcmV0dXJuIG91dAogICAgZGVmIGRpc2NvdmVyKHNlbGYsKixkb2N1bWVudF9jbGFzcyxqdXJpc2RpY3Rpb24scXVlcnkpOgogICAgICAgIGtpbmQ9ZG9jdW1lbnRfY2xhc3Muc3RyaXAoKS51cHBlcigpCiAgICAgICAgaWYga2luZCBub3QgaW4geyJSRk4iLCJSU04iLCJSVCIsIlJLSyIsIkdQUCJ9OiByYWlzZSBQbGFubmluZ0RvY3VtZW50QWNxdWlzaXRpb25FcnJvcihmIlVuc3VwcG9ydGVkIGF1dG9tYXRpYyBwbGFubmluZyBkb2N1bWVudCBjbGFzczoge2tpbmR9IikKICAgICAgICBpZiBraW5kIT0iR1BQIjogcmV0dXJuIFtdCiAgICAgICAgZm91bmQ9W107IHNlZW49c2V0KCk7IHByZXZpb3VzPU5vbmUKICAgICAgICBmb3IgcGFnZSBpbiByYW5nZSgxLHNlbGYuTUFYX0dQUF9QQUdFUysxKToKICAgICAgICAgICAgaHRtbCxmaW5hbD1zZWxmLl9nZXRfaHRtbChfd2l0aF9wYWdlKHNlbGYuR1BQX0NBVEFMT0dVRV9VUkwscGFnZSkpOyBpdGVtcz1zZWxmLl9leHRyYWN0KGh0bWwsZmluYWwpCiAgICAgICAgICAgIHNpZz10dXBsZShzb3J0ZWQoX25vcm1hbGl6ZWRfdXJpKHguc291cmNlX3VyaSkgZm9yIHggaW4gaXRlbXMpKQogICAgICAgICAgICBpZiBwYWdlPjEgYW5kIHNpZz09cHJldmlvdXM6IGJyZWFrCiAgICAgICAgICAgIHByZXZpb3VzPXNpZwogICAgICAgICAgICBpZiBwYWdlPjEgYW5kIG5vdCBpdGVtczogYnJlYWsKICAgICAgICAgICAgZm9yIHggaW4gaXRlbXM6CiAgICAgICAgICAgICAgICBrZXk9X25vcm1hbGl6ZWRfdXJpKHguc291cmNlX3VyaSkKICAgICAgICAgICAgICAgIGlmIGtleSBub3QgaW4gc2Vlbjogc2Vlbi5hZGQoa2V5KTsgZm91bmQuYXBwZW5kKHgpCiAgICAgICAgdG9rZW5zPSIgIi5qb2luKHF1ZXJ5LmNhc2Vmb2xkKCkuc3BsaXQoKSkuc3BsaXQoKQogICAgICAgIHJldHVybiBbeCBmb3IgeCBpbiBmb3VuZCBpZiBhbGwodCBpbiB4LnRpdGxlLmNhc2Vmb2xkKCkgZm9yIHQgaW4gdG9rZW5zKV0gaWYgdG9rZW5zIGVsc2UgZm91bmQKIiIiCnAud3JpdGVfdGV4dChzWzpzdGFydF0rY29kZSsiXG4iLGVuY29kaW5nPSJ1dGYtOCIpCnByaW50KCJQQVRDSEVEOiIscCkK"
+$B64 | docker compose exec -T backend python -c "import sys,base64; exec(base64.b64decode(sys.stdin.read()).decode())"
+if ($LASTEXITCODE -ne 0) { throw "Patch failed." }
+Write-Host "[2] Syntax"
+docker compose exec -T backend python -m py_compile app/services/planning_document_acquisition.py
+if ($LASTEXITCODE -ne 0) { throw "Syntax failed." }
+Write-Host "[3] Existing acquisition regression"
+docker compose exec -T backend python -m pytest -q tests/test_planning_document_acquisition.py
+if ($LASTEXITCODE -ne 0) { throw "Regression failed." }
+Write-Host "[4] Existing document retrieval regression"
+docker compose exec -T backend python -m pytest -q tests/test_document_retrieval.py
+if ($LASTEXITCODE -ne 0) { throw "Retrieval regression failed." }
+Write-Host "[5] Live read-only discovery"
+docker compose exec -T backend python -c "from app.services.planning_document_acquisition import PlanMalaysiaOfficialProvider; p=PlanMalaysiaOfficialProvider(); xs=p.discover(document_class='GPP',jurisdiction=None,query=''); print('live_candidates=',len(xs)); [print('-',x.title) for x in xs[:20]]; assert len(xs)>0"
+if ($LASTEXITCODE -ne 0) { throw "Live discovery failed." }
+Write-Host "[6] Live filtering"
+docker compose exec -T backend python -c "from app.services.planning_document_acquisition import PlanMalaysiaOfficialProvider; p=PlanMalaysiaOfficialProvider(); [(print(q,'=>',[x.title for x in p.discover(document_class='GPP',jurisdiction=None,query=q)[:5]])) for q in ['tanah tinggi','kejiranan hijau','kemudahan masyarakat']]"
+if ($LASTEXITCODE -ne 0) { throw "Filtering failed." }
+Write-Host "[7] Health"
+docker compose ps
+Write-Host "============================================================"
+Write-Host "GPP CONCRETE CATALOGUE ADAPTER V1 PASS"
+Write-Host "============================================================"
+Write-Host "Official catalogue discovery: PASS"
+Write-Host "Pagination: ENABLED"
+Write-Host "Official PDF extraction: ENABLED"
+Write-Host "Query filtering: ENABLED"
+Write-Host "Duplicate suppression: ENABLED"
+Write-Host "RFN/RSN/RT/RKK: FAIL-CLOSED"
+Write-Host "DB write: NONE"
+Write-Host "Migration: NONE"
+Write-Host "Frontend change: NONE"
+Write-Host "============================================================"

@@ -79,47 +79,240 @@ export function ProjectPage() {
   const activeSite = sites.find((site) => site.is_active && !site.is_archived);
 
   return (
-    <section className="workspace-stack">
-      <section className="panel">
-        <p className="eyebrow">Project</p>
-        <h1>{loading ? "Loading project..." : project?.name ?? "Project"}</h1>
-        {project?.description && <p className="lede">{project.description}</p>}
-        <p><Link to="/projects">Back to Projects</Link></p>
-        <p>
-          <Link to={`/projects/${projectId}/documents`}>
-            Open Planning Documents
-          </Link>
-        </p>
-        <p>
-          <Link to={`/projects/${projectId}/track-b`} className="primary-link">Open Track B Command Center</Link>
-        </p>
-      </section>
+    <section className="gp2-project-overview">
+      <Link
+        className="gp2-back"
+        to="/projects"
+      >
+        ← Back to Projects
+      </Link>
 
-      <section className="panel">
-        <h2>Active Site</h2>
-        {activeSite ? (
-          <div className="resource-card">
-            <div>
-              <strong>{activeSite.name}</strong>
-              <p>Geometry revision {activeSite.geometry_revision}</p>
-            </div>
-            <Link to={`/projects/${projectId}/map`}>Open Map</Link>
+      <header className="gp2-project-hero gp-premium-project-hero">
+        <div className="gp-premium-project-copy">
+          <p className="eyebrow">
+            Project workspace
+          </p>
+
+          <h1>
+            GeoPilot AI Planning Workspace
+          </h1>
+
+          <div className="gp-final-project-identity">
+            <span className="gp-final-project-identity-label">
+              ACTIVE PROJECT
+            </span>
+
+            <strong className="gp-final-project-name">
+              {loading
+                ? "Loading project..."
+                : (project?.name ?? "Planning Project")
+                    .replace(/\s*Acceptance Test\s*/gi, "")
+                    .trim()}
+            </strong>
           </div>
+
+          <p className="gp2-project-description">
+            AI-powered geospatial planning workspace integrating
+            spatial analysis, satellite intelligence, planning policy,
+            and evidence-grounded decision support.
+          </p>
+
+          <div className="gp-premium-project-meta">
+            <span>TRACK B</span>
+            <span>GEOSPATIAL AI</span>
+            <span>PLANNING DECISION SUPPORT</span>
+          </div>
+        </div>
+
+        <aside className="gp-premium-status-panel">
+          <div className="gp-premium-status-heading">
+            <span className="gp-premium-status-dot" />
+            <span>PROJECT STATUS</span>
+          </div>
+
+          <div className="gp-premium-status-main">
+            <strong>
+              {activeSite ? "Spatial Context Ready" : "Workspace Ready"}
+            </strong>
+
+            <span>
+              {activeSite
+                ? "Active study area connected"
+                : "Study area not configured"}
+            </span>
+          </div>
+
+          <div className="gp-premium-status-grid">
+            <div>
+              <small>PROJECT</small>
+              <strong>ACTIVE</strong>
+            </div>
+
+            <div>
+              <small>STUDY AREA</small>
+              <strong>
+                {activeSite ? "READY" : "PENDING"}
+              </strong>
+            </div>
+          </div>
+
+          <Link
+            className="gp2-command gp-premium-command"
+            to={`/projects/${projectId}/track-b`}
+          >
+            Open Command Center
+            <span aria-hidden="true">→</span>
+          </Link>
+        </aside>
+      </header>
+
+      {error && (
+        <div
+          className="status-card status-error"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
+
+      <section className="gp2-action-grid">
+        <Link
+          className="gp2-action-card gp2-action-card-clickable"
+          to={`/projects/${projectId}/documents`}
+        >
+          <span className="gp2-action-code">
+            DOC
+          </span>
+
+          <h2>Planning Documents</h2>
+
+          <p>
+            Planning policy and supporting
+            evidence for this project.
+          </p>
+
+          <span className="gp2-action-card-cta">
+            Open Documents →
+          </span>
+        </Link>
+
+        {activeSite ? (
+          <Link
+            className="gp2-action-card gp2-action-card-clickable"
+            to={`/projects/${projectId}/map`}
+          >
+            <span className="gp2-action-code">
+              SITE
+            </span>
+
+            <h2>Study Area</h2>
+
+            <strong>{activeSite.name}</strong>
+
+            <p>
+              Active spatial boundary ·
+              revision {activeSite.geometry_revision}
+            </p>
+
+            <span className="gp2-action-card-cta">
+              Open Map →
+            </span>
+          </Link>
         ) : (
-          <p>No active Site yet. Create one below.</p>
+          <button
+            type="button"
+            className="gp2-action-card gp2-action-card-clickable gp2-action-card-button"
+            onClick={() => {
+              const setup = document.getElementById(
+                "advanced-site-setup",
+              ) as HTMLDetailsElement | null;
+
+              if (setup) {
+                setup.open = true;
+                setup.scrollIntoView({
+                  behavior: "smooth",
+                  block: "center",
+                });
+              }
+            }}
+          >
+            <span className="gp2-action-code">
+              SITE
+            </span>
+
+            <h2>Study Area</h2>
+
+            <p>
+              No active study area configured.
+            </p>
+
+            <span className="gp2-action-card-cta">
+              Add Study Area ↓
+            </span>
+          </button>
         )}
       </section>
 
-      <section className="panel">
-        <h2>Create Site</h2>
-        <p className="lede">For deployment testing, the textarea starts with an explicitly synthetic demo polygon. Replace it with your real project geometry later.</p>
-        <form className="stack-form" onSubmit={createSite}>
-          <label>Site name<input value={siteName} onChange={(e) => setSiteName(e.target.value)} required /></label>
-          <label>GeoJSON Polygon / MultiPolygon<textarea className="code-input" value={geometryText} onChange={(e) => setGeometryText(e.target.value)} required /></label>
-          <button type="submit" disabled={busy}>{busy ? "Creating..." : "Create Active Site"}</button>
+      <details
+        className="gp2-details gp2-site-details"
+        id="advanced-site-setup"
+      >
+        <summary>
+          <span>
+            <strong>Advanced Site Setup</strong>
+
+            <small>
+              Create a study area using GeoJSON
+            </small>
+          </span>
+
+          <span aria-hidden="true">+</span>
+        </summary>
+
+        <div className="gp2-site-intro">
+          GeoJSON site creation is preserved for
+          manual or fallback setup.
+        </div>
+
+        <form
+          className="gp2-form"
+          onSubmit={createSite}
+        >
+          <label>
+            Site name
+
+            <input
+              value={siteName}
+              onChange={(event) =>
+                setSiteName(event.target.value)
+              }
+              required
+            />
+          </label>
+
+          <label>
+            GeoJSON Polygon / MultiPolygon
+
+            <textarea
+              className="code-input"
+              value={geometryText}
+              onChange={(event) =>
+                setGeometryText(event.target.value)
+              }
+              required
+            />
+          </label>
+
+          <button
+            type="submit"
+            disabled={busy}
+          >
+            {busy
+              ? "Creating..."
+              : "Create Active Site"}
+          </button>
         </form>
-        {error && <div className="status-card status-error" role="alert">{error}</div>}
-      </section>
+      </details>
     </section>
   );
 }

@@ -1,0 +1,60 @@
+GEOPILOT AI — COMPETITION-SAFE BM-ONLY ROLLBACK V1
+
+BM_CHANGES_REMOVED=
+- Removed shared BAHASA_MALAYSIA_OUTPUT_INSTRUCTION policy file and all production prompt wiring.
+- Removed BM numeric-grounding policy hardening contained in that shared policy; grounding validator and numeric validator were not changed.
+- Restored English deterministic temporal summary and limitation text in backend/app/services/track_b.py.
+- Restored English Planning Workspace labels, progress text, response/fallback text, and Track B AI presentation labels/fallbacks.
+- Removed the BM-only policy test introduced with the standardization work.
+- Preserved unrelated site-context routing, PlanningRun behavior, Overpass/provider/evidence code, numeric grounding rules, and frontend functional/encoding fixes.
+
+FILES_MODIFIED=7 total: 5 mixed production files updated; 1 BM-only production policy file removed; 1 BM-only test file removed.
+Updated:
+- backend/app/services/planning_orchestrator.py
+- backend/app/services/track_b_ai.py
+- backend/app/services/track_b.py
+- frontend/src/features/planning/PlanningWorkspace.tsx
+- frontend/src/pages/TrackBWorkspacePage.tsx
+Removed:
+- backend/app/services/language_policy.py
+- backend/tests/test_bahasa_malaysia_output_policy.py
+
+BACKUPS_CREATED=YES
+BACKUP_DIRECTORY=artifacts/competition_bm_only_rollback_backup_20260819
+BACKUP_SHA256=
+- backend__app__services__language_policy.py 94E8DFDACDCEBFD3DB8FD47946308742309420BA1CC70255FA200362EE37317F
+- backend__app__services__planning_orchestrator.py 376A3D6BAE215893902A808707EA9FC69AE37DA62115233971D5F504342433A8
+- backend__app__services__track_b.py 937A9D77E505AC06E81C89193D3CF78FAC9B22639CCBBEEB166CAC929DBA9528
+- backend__app__services__track_b_ai.py 2A640D3163D504E4D633919A862DF954E1948BD7084C49B9F4649760CE00D822
+- backend__tests__test_bahasa_malaysia_output_policy.py 42AFDB6EB33D36951C97816F56A383F7270B814371F4F025FF706F74FE1F4F79
+- frontend__src__features__planning__PlanningWorkspace.tsx F54284198FA168C723F9647A8C8390D7414DF92F0C1348B6575F65FDD1CE3EB9
+- frontend__src__pages__TrackBWorkspacePage.tsx 7111D35706B98DF14BF97037B0792A02AFB35213770B8C816D02E02FEFC22D05
+
+SITE_CONTEXT_ROUTE_FIX_PRESERVED=YES
+OVERPASS_FAILOVER_PRESERVED=YES
+GROUNDING_VALIDATOR_UNCHANGED=YES
+PROVIDER_LOGIC_UNCHANGED=YES
+API_CONTRACT_UNCHANGED=YES
+DATABASE_UNCHANGED=YES
+SITE_STATE_UNCHANGED=YES
+
+COMPILE=PASS; host Python compileall backend/app and focused backend module compilation succeeded.
+FOCUSED_TESTS=PASS; existing backend container ran 67 focused tests covering Track B site_context dispatch, routing/tool registration, site-context acquisition/evidence, Overpass failover, and grounding validation.
+REGRESSION_TESTS=PASS; frontend container typecheck passed and frontend production build passed; backend focused regression collection/execution passed in the existing healthy container.
+DIFF_CHECK=PASS_SCOPED; targeted rollback files have no whitespace errors. Repository-wide git diff --check still reports two pre-existing unrelated blank lines at EOF in frontend/src/pages/ProjectPage.tsx and frontend/src/styles.css.
+
+VALIDATION_NOTES=
+- No source changes were made to routing, provider resilience, evidence schemas, site-context acquisition/evidence, grounded_synthesis.py, API contracts, database code, or Site state.
+- Existing healthy containers were used only for validation; they were not restarted or rebuilt.
+- Host pytest collection was unavailable because the selected host interpreter lacks fastapi, sqlalchemy, and httpx; the same focused suite passed in the existing backend container.
+- No live UI question was run, as required.
+
+PRODUCTION_FILES_MODIFIED=YES; only the scoped BM rollback files listed above.
+DATABASE_MANUAL_WRITE=NO
+SITE_STATE_MODIFIED=NO
+CONTAINERS_RESTARTED=NO
+MIGRATION_RUN=NO
+COMMIT_CREATED=NO
+PUSH_PERFORMED=NO
+
+FINAL_CLASSIFICATION=PASS_BM_ONLY_ROLLBACK

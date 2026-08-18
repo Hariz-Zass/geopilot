@@ -42,6 +42,34 @@ _POLICY_TERMS = (
     "garis panduan", "piawaian", "syarat", "dibenarkan", "had",
 )
 
+_TEMPORAL_TERMS = (
+    "t1", "t2", "before", "after", "temporal", "change", "changes", "changed",
+    "compare", "comparison", "difference", "differences",
+    "sebelum", "selepas", "perubahan", "berubah", "banding", "bandingkan",
+    "imej lama", "imej baru", "citra lama", "citra baru",
+)
+
+_TEMPORAL_SITE_TERMS = (
+    "site", "tapak", "kawasan", "kawasan ini", "study area",
+    "kawasan kajian",
+)
+
+_SITE_CONTEXT_TERMS = (
+    "nearby", "near", "surrounding", "surroundings", "around",
+    "facility", "facilities", "amenity", "amenities",
+    "access", "accessibility", "school", "schools",
+    "education", "educational", "hospital", "clinic",
+    "healthcare", "commercial", "shop", "shops",
+    "recreation", "park", "tourism", "civic",
+    "public transport", "transport", "road", "roads",
+    "berhampiran", "berdekatan", "sekitar", "sekeliling",
+    "kemudahan", "akses", "aksesibiliti", "sekolah",
+    "pendidikan", "hospital", "klinik", "kesihatan",
+    "komersial", "kedai", "rekreasi", "taman",
+    "pelancongan", "pengangkutan", "jalan",
+)
+
+
 
 def _contains_any(text: str, terms: tuple[str, ...]) -> bool:
     return any(term in text for term in terms)
@@ -59,6 +87,45 @@ def route_question(question: str) -> DataRequirementPlan:
                 "Clarify whether density means a document standard, proposed "
                 "density, existing density, population density, units per "
                 "hectare, or a category.",
+            ),
+        )
+
+    temporal = _contains_any(q, _TEMPORAL_TERMS)
+
+    if temporal:
+        temporal_tools: list[str] = ["satellite.temporal_ndvi"]
+
+        if _contains_any(q, _AREA_TERMS):
+            temporal_tools.append("gis.site_area")
+
+        if _contains_any(q, _SITE_CLASSIFICATION_TERMS):
+            temporal_tools.append("gis.site_applicability")
+
+        return DataRequirementPlan(
+            state="planned",
+            capability="temporal_change",
+            tools=tuple(dict.fromkeys(temporal_tools)),
+            required_evidence=("persisted_site_temporal_measurement",),
+            limitations=(
+                "Temporal conclusions are limited to persisted validated "
+                "project/site temporal measurements.",
+                "Measured spectral or NDVI change does not by itself prove "
+                "development, land-use conversion, causation, illegality, "
+                "or statutory non-compliance.",
+            ),
+        )
+
+    site_context = _contains_any(q, _SITE_CONTEXT_TERMS)
+
+    if site_context:
+        return DataRequirementPlan(
+            state="planned",
+            capability="site_context",
+            tools=("context.site_surroundings",),
+            limitations=(
+                "Site surroundings are provider-sourced contextual evidence "
+                "and are not statutory zoning, legal parcel, approval, or "
+                "authoritative planning-policy evidence.",
             ),
         )
 

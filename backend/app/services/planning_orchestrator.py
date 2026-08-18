@@ -37,11 +37,14 @@ from app.services.planning_runs import (
     save_run_state,
 )
 from app.services.planning_tools import (
+    execute_latest_temporal_ndvi,
     execute_site_applicability,
     execute_site_area,
+    execute_site_context,
     execute_site_terrain_summary,
 )
 from app.services.terrain_analysis import TerrainEvidenceMissing
+
 
 
 class OrchestratorError(Exception):
@@ -595,6 +598,21 @@ def execute_planning_run(
             )
         )
 
+    if "context.site_surroundings" in tools:
+        (
+            context_evidence,
+            context_limitations,
+        ) = execute_site_context(
+            session,
+            owner=owner,
+            project_id=project_id,
+            site_id=site_id,
+            site_state=site_state,
+        )
+
+        evidence.extend(context_evidence)
+        tool_limitations.extend(context_limitations)
+
     if "terrain.site_summary" in tools:
         try:
             evidence.append(
@@ -620,6 +638,32 @@ def execute_planning_run(
                     + ".",
                 ],
             )
+
+    if "satellite.temporal_ndvi" in tools:
+        temporal_evidence = execute_latest_temporal_ndvi(
+            session,
+            owner=owner,
+            project_id=project_id,
+            site_id=site_id,
+            exclude_run_id=run.id,
+        )
+
+        if temporal_evidence is None:
+            return save_run_state(
+                session,
+                run,
+                status="degraded",
+                plan=tools,
+                evidence=evidence,
+                limitations=[
+                    *route.limitations,
+                    "No persisted validated temporal measurement is available "
+                    "for the active project/site. Run the approved T1/T2 "
+                    "temporal analysis first.",
+                ],
+            )
+
+        evidence.append(temporal_evidence)
 
     spatial_evidence: list[
         ToolEvidence
@@ -778,6 +822,23 @@ def execute_planning_run(
         "treat its elevation and slope values as the only "
         "validated terrain measurements for the active Site. "
         "Do not infer terrain values from NDVI or basemap context. "
+        "When satellite.temporal_ndvi evidence is supplied, answer temporal "
+        "or T1/T2 questions directly from that persisted measurement. "
+        "You may describe the supplied before/after acquisition identity, "
+        "mean NDVI values, changed pixel count, valid pixel count, changed "
+        "percentage, usable coverage, and threshold policy when present. "
+        "Do not claim that NDVI change proves construction, development, "
+        "deforestation, flooding, land-use conversion, causation, illegality, "
+        "or statutory non-compliance. "
+        "When context.site_surroundings evidence is supplied, "
+        "treat it only as provider-sourced contextual evidence about "
+        "nearby or intersecting features around the active Site. "
+        "You may report supplied names, categories, subtypes, spatial "
+        "relations, and distances. Do not treat OpenStreetMap context "
+        "as statutory zoning, legal parcel evidence, planning-policy "
+        "authority, development approval, or proof of compliance. "
+        "Do not claim absence of a feature merely because it was not "
+        "returned or selected by the provider. "
         "For zoning, land-use, planning-block, or BPK "
         "questions, deterministic gis.site_applicability "
         "evidence has priority over retrieved document "

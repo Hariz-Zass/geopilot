@@ -1,4 +1,4 @@
-import { FormEvent, useState } from "react";
+﻿import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { authApi } from "../lib/api/auth";
@@ -40,65 +40,203 @@ export function RegisterPage() {
   }
 
   return (
-    <section className="panel auth-panel">
-      <p className="eyebrow">Account</p>
+    <section className="gp-auth-shell">
+      <div className="gp-auth-visual">
+        <div className="gp-auth-grid" aria-hidden="true" />
 
-      <h1>Create your GeoPilot account</h1>
+        <div
+          className="gp-auth-orbit gp-auth-orbit-one"
+          aria-hidden="true"
+        />
 
-      <form className="stack-form" onSubmit={submit}>
-        <label>
-          Display name
-          <input
-            value={displayName}
-            onChange={(event) =>
-              setDisplayName(event.target.value)
-            }
-            required
-          />
-        </label>
+        <div
+          className="gp-auth-orbit gp-auth-orbit-two"
+          aria-hidden="true"
+        />
 
-        <label>
-          Email
-          <input
-            type="email"
-            value={email}
-            onChange={(event) =>
-              setEmail(event.target.value)
-            }
-            required
-          />
-        </label>
-
-        <label>
-          Password (minimum 12 characters)
-          <input
-            type="password"
-            minLength={12}
-            value={password}
-            onChange={(event) =>
-              setPassword(event.target.value)
-            }
-            required
-          />
-        </label>
-
-        {error && (
+        <div className="gp-auth-brand">
           <div
-            className="status-card status-error"
-            role="alert"
+            className="gp-auth-brand-mark"
+            aria-hidden="true"
           >
-            {error}
+            <span />
+            <span />
+            <span />
           </div>
-        )}
 
-        <button type="submit" disabled={busy}>
-          {busy ? "Creating..." : "Create account"}
-        </button>
-      </form>
+          <p className="gp-auth-kicker">
+            GEOSPATIAL PLANNING INTELLIGENCE
+          </p>
 
-      <p>
-        Already registered? <Link to="/login">Sign in</Link>.
-      </p>
+          <h1>
+            Build better plans
+            <br />
+            from better evidence.
+          </h1>
+
+          <p className="gp-auth-intro">
+            Create your GeoPilot workspace and bring
+            planning documents, spatial evidence and
+            AI-assisted analysis into one environment.
+          </p>
+
+          <div className="gp-auth-capabilities">
+            <div>
+              <span className="gp-auth-capability-number">
+                01
+              </span>
+
+              <span>
+                <strong>Evidence First</strong>
+                <small>
+                  Ground decisions in traceable sources
+                </small>
+              </span>
+            </div>
+
+            <div>
+              <span className="gp-auth-capability-number">
+                02
+              </span>
+
+              <span>
+                <strong>Spatial Context</strong>
+                <small>
+                  Connect planning questions to geography
+                </small>
+              </span>
+            </div>
+
+            <div>
+              <span className="gp-auth-capability-number">
+                03
+              </span>
+
+              <span>
+                <strong>Planning Intelligence</strong>
+                <small>
+                  Move from information to decision support
+                </small>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div
+          className="gp-auth-coordinate"
+          aria-hidden="true"
+        >
+          <span>GEOPILOT / ACCOUNT INITIALIZATION</span>
+          <span>PLANNING SYSTEM READY</span>
+        </div>
+      </div>
+
+      <div className="gp-auth-form-side">
+        <div className="gp-auth-form-wrap">
+          <div className="gp-auth-mobile-brand">
+            <span className="gp-auth-mobile-dot" />
+            GeoPilot AI
+          </div>
+
+          <p className="gp-auth-form-kicker">
+            CREATE YOUR WORKSPACE
+          </p>
+
+          <h2>Join GeoPilot</h2>
+
+          <p className="gp-auth-form-copy">
+            Create an account to start your planning
+            intelligence workspace.
+          </p>
+
+          <form
+            className="gp-auth-form"
+            onSubmit={submit}
+          >
+            <label>
+              <span>Display name</span>
+
+              <input
+                value={displayName}
+                onChange={(event) =>
+                  setDisplayName(event.target.value)
+                }
+                autoComplete="name"
+                placeholder="Your name"
+                required
+              />
+            </label>
+
+            <label>
+              <span>Email address</span>
+
+              <input
+                type="email"
+                value={email}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
+                autoComplete="email"
+                placeholder="planner@example.com"
+                required
+              />
+            </label>
+
+            <label>
+              <span>Password</span>
+
+              <input
+                type="password"
+                minLength={12}
+                value={password}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
+                autoComplete="new-password"
+                placeholder="Minimum 12 characters"
+                required
+              />
+            </label>
+
+            {error && (
+              <div
+                className="status-card status-error"
+                role="alert"
+              >
+                {error}
+              </div>
+            )}
+
+            <button
+              className="gp-auth-submit"
+              type="submit"
+              disabled={busy}
+            >
+              <span>
+                {busy
+                  ? "Creating..."
+                  : "Create workspace"}
+              </span>
+
+              {!busy && (
+                <span aria-hidden="true">→</span>
+              )}
+            </button>
+          </form>
+
+          <div className="gp-auth-switch">
+            <span>Already registered?</span>
+
+            <Link to="/login">
+              Sign in
+            </Link>
+          </div>
+
+          <p className="gp-auth-footnote">
+            Evidence-grounded planning decision support
+          </p>
+        </div>
+      </div>
     </section>
   );
 }

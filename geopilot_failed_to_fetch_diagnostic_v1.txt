@@ -1,0 +1,298 @@
+============================================================
+GEOPILOT FAILED-TO-FETCH DIAGNOSTIC V1
+============================================================
+Working directory: C:\GeoPilotAI\GeoPilotAI-TrackB-Competition-Acceptance-v7\geopilot_v7
+
+[1] DOCKER SERVICE STATUS
+NAME                   IMAGE                  COMMAND                  SERVICE    CREATED             STATUS                    PORTS
+geopilot-v7-backend    geopilot_v7-backend    "uvicorn app.main:ap…"   backend    About an hour ago   Up 6 minutes (healthy)    0.0.0.0:8007->8000/tcp, [::]:8007->8000/tcp
+geopilot-v7-db         geopilot_v7-db         "docker-entrypoint.s…"   db         19 hours ago        Up 7 hours (healthy)      0.0.0.0:5437->5432/tcp, [::]:5437->5432/tcp
+geopilot-v7-frontend   geopilot_v7-frontend   "docker-entrypoint.s…"   frontend   19 hours ago        Up 14 minutes (healthy)   0.0.0.0:5177->5173/tcp, [::]:5177->5173/tcp
+
+[2] BACKEND HEALTH FROM HOST
+HTTP 200
+{"status":"ok","service":"geopilot-backend"}
+
+[3] BACKEND OPENAPI FROM HOST
+HTTP 200
+bytes=168323
+
+[4] FRONTEND RUNTIME API BASE
+VITE_API_BASE_URL=http://localhost:8007
+VITE_APP_NAME=GeoPilot AI
+
+[5] BACKEND RECENT LOGS
+geopilot-v7-backend  |     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |     |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2641, in run_sync_in_worker_thread
+geopilot-v7-backend  |     |     return await future
+geopilot-v7-backend  |     |            ^^^^^^^^^^^^
+geopilot-v7-backend  |     |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1033, in run
+geopilot-v7-backend  |     |     result = context.run(func, *args)
+geopilot-v7-backend  |     |              ^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |     |   File "/app/app/api/v1/planning_runs.py", line 14, in create
+geopilot-v7-backend  |     |     def create(project_id:uuid.UUID,site_id:uuid.UUID,payload:PlanningRunCreate,current_user:Annotated[User,Depends(get_current_user)],session:Annotated[Session,Depends(get_db_session)]): return create_planning_run(session,owner=current_user,project_id=project_id,site_id=site_id,request=payload)
+geopilot-v7-backend  |     |                                                                                                                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |     |   File "/app/app/services/planning_runs.py", line 12, in create_planning_run
+geopilot-v7-backend  |     |     resolve_analysis_scope(session,owner=owner,project_id=project_id,site_id=site_id)
+geopilot-v7-backend  |     |   File "/app/app/services/isolation.py", line 145, in resolve_analysis_scope
+geopilot-v7-backend  |     |     return resolve_site_scope(
+geopilot-v7-backend  |     |            ^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |     |   File "/app/app/services/isolation.py", line 125, in resolve_site_scope
+geopilot-v7-backend  |     |     raise ScopeStateError("site is inactive")
+geopilot-v7-backend  |     | app.services.isolation.ScopeStateError: site is inactive
+geopilot-v7-backend  |     +------------------------------------
+geopilot-v7-backend  |
+geopilot-v7-backend  | During handling of the above exception, another exception occurred:
+geopilot-v7-backend  |
+geopilot-v7-backend  | Traceback (most recent call last):
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py", line 409, in run_asgi
+geopilot-v7-backend  |     result = await app(  # type: ignore[func-returns-value]
+geopilot-v7-backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py", line 60, in __call__
+geopilot-v7-backend  |     return await self.app(scope, receive, send)
+geopilot-v7-backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/applications.py", line 1054, in __call__
+geopilot-v7-backend  |     await super().__call__(scope, receive, send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/applications.py", line 113, in __call__
+geopilot-v7-backend  |     await self.middleware_stack(scope, receive, send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 186, in __call__
+geopilot-v7-backend  |     raise exc
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/errors.py", line 164, in __call__
+geopilot-v7-backend  |     await self.app(scope, receive, _send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/base.py", line 182, in __call__
+geopilot-v7-backend  |     with recv_stream, send_stream, collapse_excgroups():
+geopilot-v7-backend  |                                    ^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/contextlib.py", line 158, in __exit__
+geopilot-v7-backend  |     self.gen.throw(value)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_utils.py", line 85, in collapse_excgroups
+geopilot-v7-backend  |     raise exc
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/base.py", line 184, in __call__
+geopilot-v7-backend  |     response = await self.dispatch_func(request, call_next)
+geopilot-v7-backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/app/app/core/middleware.py", line 29, in dispatch
+geopilot-v7-backend  |     response = await call_next(request)
+geopilot-v7-backend  |                ^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/base.py", line 159, in call_next
+geopilot-v7-backend  |     raise app_exc
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/base.py", line 144, in coro
+geopilot-v7-backend  |     await self.app(scope, receive_or_disconnect, send_no_error)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 93, in __call__
+geopilot-v7-backend  |     await self.simple_response(scope, receive, send, request_headers=headers)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/cors.py", line 144, in simple_response
+geopilot-v7-backend  |     await self.app(scope, receive, send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+geopilot-v7-backend  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+geopilot-v7-backend  |     raise exc
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+geopilot-v7-backend  |     await app(scope, receive, sender)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 716, in __call__
+geopilot-v7-backend  |     await self.middleware_stack(scope, receive, send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 736, in app
+geopilot-v7-backend  |     await route.handle(scope, receive, send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 290, in handle
+geopilot-v7-backend  |     await self.app(scope, receive, send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 78, in app
+geopilot-v7-backend  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+geopilot-v7-backend  |     raise exc
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+geopilot-v7-backend  |     await app(scope, receive, sender)
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/routing.py", line 75, in app
+geopilot-v7-backend  |     response = await f(request)
+geopilot-v7-backend  |                ^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 302, in app
+geopilot-v7-backend  |     raw_response = await run_endpoint_function(
+geopilot-v7-backend  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/fastapi/routing.py", line 215, in run_endpoint_function
+geopilot-v7-backend  |     return await run_in_threadpool(dependant.call, **values)
+geopilot-v7-backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/starlette/concurrency.py", line 38, in run_in_threadpool
+geopilot-v7-backend  |     return await anyio.to_thread.run_sync(func)
+geopilot-v7-backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/to_thread.py", line 65, in run_sync
+geopilot-v7-backend  |     return await get_async_backend().run_sync_in_worker_thread(
+geopilot-v7-backend  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 2641, in run_sync_in_worker_thread
+geopilot-v7-backend  |     return await future
+geopilot-v7-backend  |            ^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/usr/local/lib/python3.12/site-packages/anyio/_backends/_asyncio.py", line 1033, in run
+geopilot-v7-backend  |     result = context.run(func, *args)
+geopilot-v7-backend  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/app/app/api/v1/planning_runs.py", line 14, in create
+geopilot-v7-backend  |     def create(project_id:uuid.UUID,site_id:uuid.UUID,payload:PlanningRunCreate,current_user:Annotated[User,Depends(get_current_user)],session:Annotated[Session,Depends(get_db_session)]): return create_planning_run(session,owner=current_user,project_id=project_id,site_id=site_id,request=payload)
+geopilot-v7-backend  |                                                                                                                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/app/app/services/planning_runs.py", line 12, in create_planning_run
+geopilot-v7-backend  |     resolve_analysis_scope(session,owner=owner,project_id=project_id,site_id=site_id)
+geopilot-v7-backend  |   File "/app/app/services/isolation.py", line 145, in resolve_analysis_scope
+geopilot-v7-backend  |     return resolve_site_scope(
+geopilot-v7-backend  |            ^^^^^^^^^^^^^^^^^^^
+geopilot-v7-backend  |   File "/app/app/services/isolation.py", line 125, in resolve_site_scope
+geopilot-v7-backend  |     raise ScopeStateError("site is inactive")
+geopilot-v7-backend  | app.services.isolation.ScopeStateError: site is inactive
+geopilot-v7-backend  | 2026-08-16 09:05:44,202 INFO geopilot.http request_id=fef0c0bd-edd5-4236-ac69-b4d4af894e1f request method=GET path=/api/v1/system/ready duration_ms=11.38
+geopilot-v7-backend  | INFO:     127.0.0.1:55538 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:05:49,529 INFO geopilot.http request_id=99c75aa6-5098-4488-aef4-e454f3c4be37 request method=GET path=/api/v1/system/ready duration_ms=11.38
+geopilot-v7-backend  | INFO:     127.0.0.1:51664 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | INFO:     127.0.0.1:51668 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:05:54,856 INFO geopilot.http request_id=c99855c9-4d98-43bc-a161-6ccab52fef5e request method=GET path=/api/v1/system/ready duration_ms=11.70
+geopilot-v7-backend  | INFO:     127.0.0.1:45654 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:00,230 INFO geopilot.http request_id=cb948479-48f5-4116-92f3-ec20426f4349 request method=GET path=/api/v1/system/ready duration_ms=11.40
+geopilot-v7-backend  | 2026-08-16 09:06:05,641 INFO geopilot.http request_id=29279efb-cf67-42c8-93b0-4eaa2d0def68 request method=GET path=/api/v1/system/ready duration_ms=11.55
+geopilot-v7-backend  | INFO:     127.0.0.1:45666 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:10,970 INFO geopilot.http request_id=468c44b8-9b32-45de-88fd-e402b3b40e8e request method=GET path=/api/v1/system/ready duration_ms=11.27
+geopilot-v7-backend  | INFO:     127.0.0.1:33094 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:16,326 INFO geopilot.http request_id=d9e896da-d573-4bfd-899e-35c2f48132f9 request method=GET path=/api/v1/system/ready duration_ms=13.26
+geopilot-v7-backend  | INFO:     127.0.0.1:33102 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:21,733 INFO geopilot.http request_id=ca255fc3-9998-4522-bf6d-c5fc911d214b request method=GET path=/api/v1/system/ready duration_ms=11.99
+geopilot-v7-backend  | INFO:     127.0.0.1:52364 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:27,113 INFO geopilot.http request_id=f24aa939-2d70-417e-90fa-616b5a60e2fa request method=GET path=/api/v1/system/ready duration_ms=13.01
+geopilot-v7-backend  | INFO:     127.0.0.1:52368 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:32,579 INFO geopilot.http request_id=a2471767-5801-49ce-9380-a9b13348456c request method=GET path=/api/v1/system/ready duration_ms=13.15
+geopilot-v7-backend  | INFO:     127.0.0.1:45340 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:37,969 INFO geopilot.http request_id=e72440c7-0453-4a57-bed7-0ffc595e71d1 request method=GET path=/api/v1/system/ready duration_ms=14.29
+geopilot-v7-backend  | INFO:     127.0.0.1:51794 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:43,325 INFO geopilot.http request_id=bd3fa70f-67db-4d93-8248-5eeda27bd589 request method=GET path=/api/v1/system/ready duration_ms=13.11
+geopilot-v7-backend  | INFO:     127.0.0.1:51806 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:48,665 INFO geopilot.http request_id=b3d08cba-a66e-4a2d-bee7-455e51e4bfa7 request method=GET path=/api/v1/system/ready duration_ms=11.98
+geopilot-v7-backend  | INFO:     127.0.0.1:35398 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:54,010 INFO geopilot.http request_id=643f02ea-87a2-409b-8f27-1ec7572038a6 request method=GET path=/api/v1/system/ready duration_ms=13.26
+geopilot-v7-backend  | INFO:     127.0.0.1:35414 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:06:59,372 INFO geopilot.http request_id=47674b2b-d102-49e5-ab5f-ddf224315d27 request method=GET path=/api/v1/system/ready duration_ms=13.11
+geopilot-v7-backend  | INFO:     127.0.0.1:38664 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:04,741 INFO geopilot.http request_id=65e5ebb6-564c-419f-8fcb-d59ef682f08b request method=GET path=/api/v1/system/ready duration_ms=13.28
+geopilot-v7-backend  | INFO:     127.0.0.1:38680 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:10,110 INFO geopilot.http request_id=6b9d5fda-49e6-4ac6-8413-6364404bd278 request method=GET path=/api/v1/system/ready duration_ms=15.14
+geopilot-v7-backend  | INFO:     127.0.0.1:36116 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:15,454 INFO geopilot.http request_id=b1c6afdb-2677-4e27-ae84-4a1b67bd3a73 request method=GET path=/api/v1/system/ready duration_ms=12.61
+geopilot-v7-backend  | INFO:     127.0.0.1:36130 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | INFO:     127.0.0.1:53026 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:20,810 INFO geopilot.http request_id=c4c0b811-df4b-4a56-9d25-7624bb52b201 request method=GET path=/api/v1/system/ready duration_ms=11.17
+geopilot-v7-backend  | 2026-08-16 09:07:26,127 INFO geopilot.http request_id=946f2b66-ce2c-46de-b788-acdc677ad6f1 request method=GET path=/api/v1/system/ready duration_ms=11.35
+geopilot-v7-backend  | INFO:     127.0.0.1:53028 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:31,477 INFO geopilot.http request_id=4889a63b-f5fd-41ce-91ce-a4ec1de06865 request method=GET path=/api/v1/system/ready duration_ms=12.64
+geopilot-v7-backend  | INFO:     127.0.0.1:38064 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:36,814 INFO geopilot.http request_id=5ce7c7e1-59ab-43d9-8c57-c34deb99b742 request method=GET path=/api/v1/system/ready duration_ms=11.52
+geopilot-v7-backend  | INFO:     127.0.0.1:38070 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | INFO:     127.0.0.1:36142 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:42,183 INFO geopilot.http request_id=17a9e910-1a6d-4338-a426-b7e41c3c2366 request method=GET path=/api/v1/system/ready duration_ms=13.06
+geopilot-v7-backend  | INFO:     127.0.0.1:36152 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:47,523 INFO geopilot.http request_id=9d7a3573-a9e0-43a3-adbc-2813fe6327e5 request method=GET path=/api/v1/system/ready duration_ms=11.51
+geopilot-v7-backend  | 2026-08-16 09:07:52,848 INFO geopilot.http request_id=aeac7fbe-4e0b-4e87-99c4-c4f717d46d27 request method=GET path=/api/v1/system/ready duration_ms=12.80
+geopilot-v7-backend  | INFO:     127.0.0.1:35554 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:07:58,240 INFO geopilot.http request_id=f9b8c524-ce48-42e7-97c1-6479e24d7011 request method=GET path=/api/v1/system/ready duration_ms=18.52
+geopilot-v7-backend  | INFO:     127.0.0.1:37260 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:03,557 INFO geopilot.http request_id=98c9d3b7-1de6-4e13-9301-750a82fd83a6 request method=GET path=/api/v1/system/ready duration_ms=12.04
+geopilot-v7-backend  | INFO:     127.0.0.1:37276 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:08,878 INFO geopilot.http request_id=58a7d171-5560-48b1-844b-8f30f6be62bc request method=GET path=/api/v1/system/ready duration_ms=12.58
+geopilot-v7-backend  | INFO:     127.0.0.1:45938 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | INFO:     127.0.0.1:45944 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:14,209 INFO geopilot.http request_id=4302d668-0a79-4fa7-a211-75046933fd68 request method=GET path=/api/v1/system/ready duration_ms=10.97
+geopilot-v7-backend  | INFO:     127.0.0.1:56108 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:19,547 INFO geopilot.http request_id=6b7650fd-857a-4cce-987e-5aec7beb0da5 request method=GET path=/api/v1/system/ready duration_ms=11.42
+geopilot-v7-backend  | INFO:     127.0.0.1:56124 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:24,888 INFO geopilot.http request_id=8e580103-9064-4377-a67a-3eadf2fb6479 request method=GET path=/api/v1/system/ready duration_ms=11.33
+geopilot-v7-backend  | INFO:     127.0.0.1:47588 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:30,272 INFO geopilot.http request_id=16ecbb7b-8f6a-4dcd-8792-29ab664876a7 request method=GET path=/api/v1/system/ready duration_ms=11.22
+geopilot-v7-backend  | INFO:     127.0.0.1:47592 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:35,612 INFO geopilot.http request_id=e1811833-f0c7-4c0e-9f33-43dc8ad56f93 request method=GET path=/api/v1/system/ready duration_ms=12.39
+geopilot-v7-backend  | 2026-08-16 09:08:40,981 INFO geopilot.http request_id=5abbc580-ae67-438c-8a1c-e54cdc89944e request method=GET path=/api/v1/system/ready duration_ms=12.20
+geopilot-v7-backend  | INFO:     127.0.0.1:40164 - "GET /api/v1/system/ready HTTP/1.1" 200 OK
+geopilot-v7-backend  | INFO:     172.22.0.1:42914 - "GET /health HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:41,302 INFO geopilot.http request_id=183549f7-3f5e-4f06-a78b-f3f47076a839 request method=GET path=/health duration_ms=1.20
+geopilot-v7-backend  | INFO:     172.22.0.1:42922 - "GET /openapi.json HTTP/1.1" 200 OK
+geopilot-v7-backend  | 2026-08-16 09:08:41,881 INFO geopilot.http request_id=ad30cdba-cdd2-4bcd-93e3-dcb1bbb1b14c request method=GET path=/openapi.json duration_ms=175.31
+
+[6] FRONTEND RECENT LOGS
+geopilot-v7-frontend  |   ➜  Network: http://172.22.0.4:5173/  eth0
+geopilot-v7-frontend  |
+geopilot-v7-frontend  | > geopilot-ai-frontend@0.0.11 dev
+geopilot-v7-frontend  | > vite --host 0.0.0.0
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   VITE v8.2.1  ready in 802 ms
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   ➜  Local:   http://localhost:5173/
+geopilot-v7-frontend  |   ➜  Network: http://172.22.0.3:5173/  eth0
+geopilot-v7-frontend  | npm error path /app
+geopilot-v7-frontend  | npm error command failed
+geopilot-v7-frontend  | npm error signal SIGTERM
+geopilot-v7-frontend  | npm error command sh -c vite --host 0.0.0.0
+geopilot-v7-frontend  | npm error A complete log of this run can be found in: /root/.npm/_logs/2026-08-16T02_12_09_921Z-debug-0.log
+geopilot-v7-frontend  |
+geopilot-v7-frontend  | > geopilot-ai-frontend@0.0.11 dev
+geopilot-v7-frontend  | > vite --host 0.0.0.0
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   VITE v8.2.1  ready in 271 ms
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   ➜  Local:   http://localhost:5173/
+geopilot-v7-frontend  |   ➜  Network: http://172.22.0.3:5173/  eth0
+geopilot-v7-frontend  | npm error path /app
+geopilot-v7-frontend  | npm error command failed
+geopilot-v7-frontend  | npm error signal SIGTERM
+geopilot-v7-frontend  | npm error command sh -c vite --host 0.0.0.0
+geopilot-v7-frontend  | npm error A complete log of this run can be found in: /root/.npm/_logs/2026-08-16T02_28_04_075Z-debug-0.log
+geopilot-v7-frontend  |
+geopilot-v7-frontend  | > geopilot-ai-frontend@0.0.11 dev
+geopilot-v7-frontend  | > vite --host 0.0.0.0
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   VITE v8.2.1  ready in 343 ms
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   ➜  Local:   http://localhost:5173/
+geopilot-v7-frontend  |   ➜  Network: http://172.22.0.3:5173/  eth0
+geopilot-v7-frontend  | npm error path /app
+geopilot-v7-frontend  | npm error command failed
+geopilot-v7-frontend  | npm error signal SIGTERM
+geopilot-v7-frontend  | npm error command sh -c vite --host 0.0.0.0
+geopilot-v7-frontend  | npm error A complete log of this run can be found in: /root/.npm/_logs/2026-08-16T03_33_08_217Z-debug-0.log
+geopilot-v7-frontend  |
+geopilot-v7-frontend  | > geopilot-ai-frontend@0.0.11 dev
+geopilot-v7-frontend  | > vite --host 0.0.0.0
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   VITE v8.2.1  ready in 290 ms
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   ➜  Local:   http://localhost:5173/
+geopilot-v7-frontend  |   ➜  Network: http://172.22.0.3:5173/  eth0
+geopilot-v7-frontend  | npm error path /app
+geopilot-v7-frontend  | npm error command failed
+geopilot-v7-frontend  | npm error signal SIGTERM
+geopilot-v7-frontend  | npm error command sh -c vite --host 0.0.0.0
+geopilot-v7-frontend  | npm error A complete log of this run can be found in: /root/.npm/_logs/2026-08-16T03_53_57_901Z-debug-0.log
+geopilot-v7-frontend  |
+geopilot-v7-frontend  | > geopilot-ai-frontend@0.0.11 dev
+geopilot-v7-frontend  | > vite --host 0.0.0.0
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   VITE v8.2.1  ready in 351 ms
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   ➜  Local:   http://localhost:5173/
+geopilot-v7-frontend  |   ➜  Network: http://172.22.0.3:5173/  eth0
+geopilot-v7-frontend  | npm error path /app
+geopilot-v7-frontend  | npm error command failed
+geopilot-v7-frontend  | npm error signal SIGTERM
+geopilot-v7-frontend  | npm error command sh -c vite --host 0.0.0.0
+geopilot-v7-frontend  | npm error A complete log of this run can be found in: /root/.npm/_logs/2026-08-16T08_49_34_294Z-debug-0.log
+geopilot-v7-frontend  |
+geopilot-v7-frontend  | > geopilot-ai-frontend@0.0.11 dev
+geopilot-v7-frontend  | > vite --host 0.0.0.0
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   VITE v8.2.1  ready in 280 ms
+geopilot-v7-frontend  |
+geopilot-v7-frontend  |   ➜  Local:   http://localhost:5173/
+geopilot-v7-frontend  |   ➜  Network: http://172.22.0.3:5173/  eth0
+
+[7] DECISION ENDPOINT ROUTE REGISTRATION
+['POST'] /api/v1/projects/{project_id}/track-b/analyses/{analysis_id}/decision-workspace
+['POST'] /api/v1/projects/{project_id}/sites/{site_id}/planning-runs
+['GET'] /api/v1/projects/{project_id}/sites/{site_id}/planning-runs/{run_id}
+['POST'] /api/v1/projects/{project_id}/sites/{site_id}/planning-runs/{run_id}/execute
+['POST'] /api/v1/projects/{project_id}/sites/{site_id}/planning-runs/{run_id}/professional-review
+
+============================================================
+END DIAGNOSTIC - READ ONLY
+No source, DB, migration, or environment changes were made.
+============================================================

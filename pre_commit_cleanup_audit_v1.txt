@@ -1,0 +1,119 @@
+GEOPILOT AI TRACK B
+PRE-COMMIT CLEANUP AUDIT V1
+READ-ONLY INVENTORY
+
+=== AUDIT SCOPE ===
+Audit mode: read-only inventory and classification only.
+Workspace root: geopilot_v7
+TOTAL_FILES_SCANNED=1437
+Git mutation performed: NO
+Files deleted, moved, renamed, or formatted: NO
+Production source/configuration edited: NO
+Secrets printed: NO
+
+The audit covers runtime source, tests, migrations, Docker/build configuration, root launchers, standalone Python helpers, TXT reports/source snapshots, artifacts, backups, logs, and generated/cache directories. Filename age or a disposable-looking prefix is not sufficient evidence for deletion.
+
+=== CLASSIFICATION KEY ===
+A - KEEP_REQUIRED_RUNTIME: application source, schemas, configuration, migrations, Docker/build inputs, or other files required to run the product.
+B - KEEP_REQUIRED_TESTS: automated tests, fixtures, test configuration, or test harnesses used by the maintained validation surface.
+C - KEEP_REQUIRED_REPRODUCIBILITY: tracked launchers, installers, audit/preflight scripts, reports, evidence bundles, source snapshots, or backups needed to reproduce competition work or explain prior changes.
+D - REVIEW_REQUIRED: potentially obsolete, duplicated, historical, or untracked material where purpose, provenance, or dependency could not be proven from the read-only scan.
+E - SAFE_TO_DELETE_GENERATED: reproducible generated/cache output with no source-of-truth role. Deletion is a recommendation only; no deletion was performed.
+F - SAFE_TO_DELETE_DUPLICATE_OR_CONFIRMED_TEMPORARY: duplicate/temporary material whose disposable status is directly proven. No item was placed here during this audit because the available evidence was insufficient for a confident per-file determination.
+
+=== INVENTORY SUMMARY ===
+Runtime anchors identified and protected:
+- backend/app/**
+- backend/tests/**
+- backend/requirements.txt
+- frontend/src/**
+- frontend/package.json and frontend lock/build configuration
+- docker-compose*.yml, Dockerfiles, entrypoints, migrations, and environment templates
+- current Track B site-context, PlanningRun, provider-evidence, and frontend planning files
+
+Observed candidate groups:
+- Root BAT/CMD/PS1 launchers: numerous, mostly untracked, but they encode install, repair, audit, acceptance, and reproducibility workflows. Classify C or D, never delete by prefix alone.
+- Root standalone Python helpers: historical patch, probe, acceptance, and audit tooling. Classify C or D unless a direct duplicate/temporary relationship is proven.
+- TXT reports and source snapshots: historical evidence, audit output, README material, or preserved source snapshots. Classify C or D; do not treat TXT copies as runtime source or delete them solely because they are not imported.
+- artifacts/**: contains reports, backups, captured source, acceptance output, and evidence bundles. Classify C or D by provenance. The competition BM rollback backup and site-context backups remain protected from cleanup decisions.
+- Tracked runtime/test files: A or B regardless of filename age or recent modification status.
+
+=== CLASSIFICATION A: KEEP_REQUIRED_RUNTIME ===
+Keep all runtime and build/configuration anchors, including backend/app/**, frontend/src/**, backend/requirements.txt, frontend/package.json, Docker compose files, Dockerfiles, migration directories, environment templates, and current provider/site-context/planning modules.
+
+In particular, do not remove or replace:
+- backend/app/api/v1/track_b.py
+- backend/app/services/data_requirement_router.py
+- backend/app/services/planning_orchestrator.py
+- backend/app/services/planning_tools.py
+- backend/app/services/site_context_acquisition.py
+- backend/app/services/site_context_evidence.py
+- backend/app/services/grounded_synthesis.py
+- backend/app/schemas/tool_evidence.py
+- backend/app/services/track_b.py
+- backend/app/services/track_b_ai.py
+- frontend/src/features/planning/PlanningWorkspace.tsx
+- frontend/src/pages/TrackBWorkspacePage.tsx
+
+=== CLASSIFICATION B: KEEP_REQUIRED_TESTS ===
+Keep backend/tests/** and frontend test/configuration files. Keep focused Track B, PlanningRun, site-context, provider-observability, Overpass failover, temporal/GIS, and frontend type/build validation surfaces. Keep root test helpers where their purpose is not proven obsolete; classify them C or D rather than deleting them.
+
+=== CLASSIFICATION C: KEEP_REQUIRED_REPRODUCIBILITY ===
+Keep tracked or provenance-bearing launchers and evidence material, including:
+- audit_*, collect_*, install_*, fix_*, patch_*, repair_*, run_*, test_*, and acceptance/preflight scripts when their workflow role is not disproven
+- README and PROJECT_STATE documents
+- competition_* reports and rollback records
+- artifacts/** reports, captured source, acceptance output, and named backup directories
+- root TXT source snapshots and phase-specific scripts where they document or reproduce historical competition work
+
+These files may be candidates for a later archive policy, but this scan did not establish that archival or deletion is safe.
+
+=== CLASSIFICATION D: REVIEW_REQUIRED ===
+The following categories require an owner decision or per-file reference check before deletion:
+- duplicate versioned launchers such as *_v1, *_v1_1, *_v2 and similarly named BAT/PS1 pairs
+- root one-off patch/install/repair scripts whose target has since changed
+- standalone Python probes and UI/acceptance helpers
+- artifacts/** backup directories and captured source snapshots
+- untracked .bak/.backup/.old files, including:
+  artifacts/competition_pre_overpass_resilience_site_context_acquisition_20260819_014214.py.bak
+  artifacts/competition_pre_site_context_route_fix_track_b.py.bak
+  backend/app/services/provider_resilience.py.bak
+- trackb_after_patch.log and other historical logs
+- any TXT file whose origin, intended audience, or evidence value is not recorded
+
+No D item should be deleted solely because it is untracked, old, duplicated by name, or outside backend/app.
+
+=== CLASSIFICATION E: SAFE_TO_DELETE_GENERATED ===
+The scan identified reproducible generated/cache directories:
+- .pytest_cache
+- backend/.pytest_cache
+- backend/**/__pycache__
+- artifacts/__pycache__
+- frontend/**/node_modules
+- frontend/dist
+
+These are generated outputs rather than source-of-truth files and can be regenerated by the documented test/install/build workflows. They were not deleted in this audit.
+
+=== CLASSIFICATION F: SAFE_TO_DELETE_DUPLICATE_OR_CONFIRMED_TEMPORARY ===
+No files assigned. The scan did not prove any named historical script, report, backup, source snapshot, or log to be a confirmed duplicate or temporary file. Do not manufacture F classifications from naming similarity.
+
+=== RECOMMENDED CLEANUP ===
+Only generated/cache output is a high-confidence recommendation after this read-only pass:
+- .pytest_cache
+- backend/.pytest_cache
+- backend/**/__pycache__
+- artifacts/__pycache__
+- frontend/dist
+- frontend/node_modules, only when dependencies are intentionally being reinstalled and the local environment is not needed immediately
+
+Recommendation conditions:
+- confirm the working tree and required acceptance environment first;
+- preserve any generated output required for an active investigation;
+- regenerate with the project’s existing install, test, and build workflows;
+- remove no runtime source, tests, migrations, launchers, reports, evidence, or backups as part of this recommendation.
+
+=== NOT RECOMMENDED FOR CLEANUP ===
+Do not delete the current Track B production files, site-context/provider files, tests, Docker/configuration files, migrations, root launchers, competition reports, rollback backups, source snapshots, historical acceptance evidence, or untracked backup files without an explicit per-file decision.
+
+=== AUDIT CONCLUSION ===
+The workspace is cleanup-heavy but not safely reducible by filename pattern alone. The only high-confidence pre-commit cleanup class is reproducible generated/cache output. Everything else remains KEEP_REQUIRED or REVIEW_REQUIRED until ownership, references, and reproducibility are documented per item.

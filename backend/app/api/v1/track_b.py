@@ -378,7 +378,8 @@ def planner_decision_workspace(
                 planner_question=question,
             )
         if route is not None and (
-            route.capability == "planning_multi_evidence"
+            route.capability == "site_context"
+            or route.capability == "planning_multi_evidence"
             or "documents.search" in route.tools
         ):
             manifest_path = artifact_path(

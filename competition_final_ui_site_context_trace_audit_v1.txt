@@ -1,0 +1,278 @@
+GEOPILOT AI - FINAL COMPETITION UI PLANNINGRUN SITE-CONTEXT TRACE AUDIT V1
+READ-ONLY ROOT-CAUSE AUDIT
+==========================================================================
+
+AUDIT_SCOPE
+===========
+No production source, frontend, backend, test, database, or runtime state was
+modified. No PlanningRun was created, deleted, or executed. No OSM, Overpass,
+OpenAI, or Ollama call was made by this audit. Containers were not restarted.
+
+SYSTEM
+======
+BACKEND_HEALTHY=YES
+DATABASE_HEALTHY=YES
+FRONTEND_HEALTHY=YES
+
+TARGET
+======
+PROJECT_ID=f7617e94-7d8c-47d0-8bed-635cf2f48579
+SITE_ID=2ea1e98d-347c-4a0a-8e5b-5dd7f9553673
+QUESTION=Apakah kemudahan pendidikan berhampiran tapak ini?
+
+1. EXACT UI REQUEST PATH
+========================
+UI_PATH=TrackBWorkspacePage.runPlannerDecision -> trackBApi.decisionWorkspace -> POST /api/v1/projects/{project_id}/track-b/analyses/{analysis_id}/decision-workspace -> planner_decision_workspace -> build_track_b_planner_decision -> Track B AI provider -> TrackBPlannerDecisionResponse -> TrackBWorkspacePage decision-grid renderer
+
+UI SOURCE TRACE
+---------------
+frontend/src/pages/TrackBWorkspacePage.tsx
+- runPlannerDecision() validates project, token, temporal result, and question.
+- It calls trackBApi.decisionWorkspace(projectId, result.analysis_id, plannerQuestion, token).
+- It stores the response in decision state.
+- The displayed screenshot is the decision state branch, not the terrainPlanningRun branch.
+
+frontend/src/lib/api/trackB.ts
+- decisionWorkspace() uses HTTP POST.
+- Endpoint: /api/v1/projects/{project_id}/track-b/analyses/{analysis_id}/decision-workspace
+- Request body: {"planner_question": plannerQuestion.trim() || null}
+- Response type: TrackBPlannerDecision.
+
+backend/app/api/v1/track_b.py
+- planner_decision_workspace() validates the project dataset scope and calls
+  route_question(question).
+- It sends terrain_measurement questions to build_track_b_terrain_planner_decision.
+- It sends planning_multi_evidence or documents.search questions through
+  _run_track_b_planning_question(), which creates and executes a PlanningRun.
+- All other questions, including this site-context question, fall through to
+  build_track_b_planner_decision().
+
+backend/app/services/track_b_ai.py
+- build_track_b_planner_decision() reads the Track B analysis manifest.
+- It builds facts from temporal analysis values and manifest evidence.
+- It calls the Track B AI provider and validates evidence references against the
+  fixed set BEFORE_RASTER, AFTER_RASTER, SITE_GEOMETRY, TEMPORAL_ANALYSIS.
+- It writes planner_decision.json under the Track B analysis artifact path and
+  returns TrackBPlannerDecisionResponse.
+
+backend/app/services/planning_orchestrator.py
+- This is not on the screenshot's normal execution path.
+- Its context.site_surroundings branch is only reached by execute_planning_run()
+  after route_question() returns that tool.
+
+PATH_CLASSIFICATION=UI_USING_DIFFERENT_EXECUTION_PATH
+The screenshot is produced by the Track B decision-workspace/change-detection
+path, not by the normal PlanningRun create+execute API path.
+
+2. LATEST PERSISTED NORMAL PLANNINGRUN
+======================================
+The latest persisted PlanningRun matching the target project, site, and exact
+question was inspected read-only through the backend SQLAlchemy session.
+
+LATEST_RUN_ID=2f750158-339e-49cd-af95-f2be771de00a
+LATEST_RUN_CREATED_AT=2026-08-18T16:19:12.094258+00:00
+LATEST_RUN_UPDATED_AT=2026-08-18T16:19:35.730182+00:00
+LATEST_RUN_STATUS=completed
+LATEST_RUN_PLAN=["context.site_surroundings"]
+LATEST_RUN_EVIDENCE_COUNT=39
+LATEST_RUN_EVIDENCE_TOOL_NAMES=context.site_surroundings (39 items)
+LATEST_RUN_EVIDENCE_SOURCE_KINDS=external_provider (per item, under sources[])
+LATEST_RUN_FINDINGS=[]
+LATEST_RUN_PROVIDER_METADATA={"provider":"openai","model":"gpt-5.6-sol"}
+LATEST_RUN_REVIEW_STATE=unreviewed
+LATEST_RUN_SYNTHESIS_PRESENT=YES
+
+The first persisted evidence item was verified to contain:
+- schema_version=tool_evidence.v1
+- tool_name=context.site_surroundings
+- deterministic=false
+- status=retrieved
+- sources[0].kind=external_provider
+- sources[0].id begins with openstreetmap:
+- provider=openstreetmap_overpass
+- source_feature_count=500
+- selected_feature_count=39
+- category_counts include education=3
+- provider_truncated=true
+
+The persisted synthesis names the three education facilities previously verified:
+Kolej Restu at approximately 315.53 m, Taska Puspanita-Kemas at approximately
+636.57 m, and Sekolah Integrasi Shah Alam at approximately 794.47 m. It also
+states that the OpenStreetMap search was truncated and does not prove there are
+no other nearby education facilities.
+
+This persisted run proves that the normal Planning Agent path selected,
+executed, persisted, and synthesized site-context evidence successfully.
+It is not the source of the screenshot's raster-only evidence summary.
+
+3. ROUTER CLASSIFICATION
+========================
+The current backend/app/services/data_requirement_router.py was evaluated with
+the exact question.
+
+ROUTER_STATE=planned
+ROUTER_CAPABILITY=site_context
+ROUTER_TOOLS=["context.site_surroundings"]
+ROUTER_REQUIRED_EVIDENCE=[]
+
+Responsible branch:
+- temporal = _contains_any(q, _TEMPORAL_TERMS)
+- temporal is false for this question.
+- site_context = _contains_any(q, _SITE_CONTEXT_TERMS)
+- "berhampiran" and "kemudahan" and "pendidikan" are site-context terms.
+- The site-context branch returns capability="site_context" and tools=("context.site_surroundings",).
+
+Therefore the router itself does select site-context for this question.
+The divergence occurs because planner_decision_workspace() uses route capability
+only for terrain_measurement and planning_multi_evidence/documents.search. It
+does not dispatch route.capability == site_context to the Planning Agent helper.
+The final else branch calls build_track_b_planner_decision() instead.
+
+TEST/UI DIFFERENCE
+------------------
+The normal PlanningRun tests and earlier controlled acceptance exercise the
+planning_orchestrator path, where route.tools is executed. The Track B UI calls
+the decision-workspace endpoint, whose non-terrain/non-document fallback uses
+only the Track B temporal analysis manifest. This is the exact reason tests can
+prove site-context routing while the screenshot lacks site-context evidence.
+
+4. ORCHESTRATOR AND TOOL EXECUTION TRACE
+========================================
+NORMAL PLANNINGRUN PATH
+-----------------------
+For the retained normal run:
+- context.site_surroundings was approved by APPROVED_TOOLS in planning_tools.py.
+- planning_orchestrator.py saw the selected tool.
+- execute_site_context() was called.
+- 39 ToolEvidence items were generated.
+- Evidence was persisted in PlanningRun.evidence.
+- Evidence was supplied to grounded synthesis.
+- The run status became completed and synthesis was persisted.
+
+UI TRACK B PATH
+---------------
+For the screenshot path:
+- context.site_surroundings was not included in the Track B decision facts.
+- execute_site_context() was not called by planner_decision_workspace().
+- No site-context ToolEvidence was produced by that request.
+- No site-context evidence was discarded after execution.
+- No site-context persistence failure occurred.
+- No provider failure was observed in the screenshot; the response displayed
+  openai and gpt-5.6-sol.
+- The Track B AI synthesis received only temporal analysis manifest facts and
+  the manifest's raster/site evidence.
+- The frontend rendered the returned TrackBPlannerDecisionResponse correctly.
+
+FIRST_FAILURE_BOUNDARY=backend/app/api/v1/track_b.py planner_decision_workspace() fallback dispatch: site_context is classified by the router but is not routed into _run_track_b_planning_question()/planning_orchestrator; it falls into build_track_b_planner_decision(), whose evidence contract is temporal-only.
+
+5. RASTER/TEMPORAL EVIDENCE EXPLANATION
+=======================================
+The Track B temporal analysis path is:
+frontend TrackBWorkspacePage.analyze()
+ -> trackBApi.analyze()
+ -> POST /api/v1/projects/{project_id}/track-b/analyze
+ -> backend analyze_temporal_pair()
+ -> persisted analysis manifest.
+
+backend/app/services/track_b.py analyze_temporal_pair() constructs manifest
+ evidence containing:
+- before raster dataset with role=before
+- after raster dataset with role=after
+- server-owned site geometry with role/site geometry metadata
+
+The manifest also contains deterministic temporal measurements and summary
+values. build_track_b_planner_decision() passes these facts to the Track B AI
+provider. Its instructions and validator permit only these decision references:
+BEFORE_RASTER, AFTER_RASTER, SITE_GEOMETRY, TEMPORAL_ANALYSIS.
+
+Thus the screenshot tags are the Track B decision contract, not the normal
+PlanningRun ToolEvidence contract. They prove the decision brief is based on
+change-detection evidence, not that site-context evidence was queried.
+
+RASTER_TEMPORAL_FLOW_CONFIRMED=YES
+UI_IS_USING_CHANGE_DETECTION_DECISION_FLOW=YES
+NORMAL_PLANNINGRUN_FLOW_USED_BY_SCREENSHOT=NO
+
+6. FRONTEND CONTRACT TRACE
+==========================
+BUTTON=Build decision brief
+HTTP_METHOD=POST
+ENDPOINT=/api/v1/projects/{project_id}/track-b/analyses/{analysis_id}/decision-workspace
+REQUEST_BODY={"planner_question": string|null}
+FRONTEND_FUNCTION=trackBApi.decisionWorkspace()
+FRONTEND_HANDLER=TrackBWorkspacePage.runPlannerDecision()
+BACKEND_ROUTE=planner_decision_workspace()
+BACKEND_DEFAULT_SERVICE=build_track_b_planner_decision()
+NORMAL_PLANNINGRUN_SERVICE=NOT USED FOR THIS QUESTION
+NORMAL_PLANNINGRUN_ENDPOINTS_NOT_CALLED=POST /api/v1/projects/{project_id}/sites/{site_id}/planning-runs and POST /api/v1/projects/{project_id}/sites/{site_id}/planning-runs/{run_id}/execute
+
+RESPONSE_SCHEMA=TrackBPlannerDecisionResponse
+Response fields include analysis_id, provider, model, confidence, priority,
+decision_title, issue, planning_implication, evidence_summary,
+recommended_actions, evidence_refs, limitations, planner_question,
+evidence_policy, and professional_review_required.
+
+FRONTEND_RENDERING
+------------------
+TrackBWorkspacePage renders:
+- decision.priority and decision.confidence in the triage card
+- decision.provider and decision.model
+- decision.decision_title and decision.issue
+- decision.planning_implication
+- decision.evidence_summary
+- decision.evidence_refs as visible tags
+- decision.recommended_actions
+- decision.limitations
+
+The frontend receives and renders the Track B response. It does not omit a
+site-context field; the response contains no site-context field to render.
+
+7. REQUIRED TRACE FLAGS
+=======================
+UI_PATH=TrackBWorkspacePage.runPlannerDecision -> trackBApi.decisionWorkspace -> planner_decision_workspace -> build_track_b_planner_decision -> Track B AI -> TrackBPlannerDecisionResponse -> TrackBWorkspacePage decision-grid
+BACKEND_ENDPOINT=POST /api/v1/projects/{project_id}/track-b/analyses/{analysis_id}/decision-workspace
+LATEST_RUN_ID=2f750158-339e-49cd-af95-f2be771de00a
+LATEST_RUN_STATUS=completed
+LATEST_RUN_PLAN=["context.site_surroundings"]
+LATEST_RUN_EVIDENCE_COUNT=39
+SITE_CONTEXT_SELECTED=YES in router; NO in screenshot Track B decision facts
+SITE_CONTEXT_EXECUTED=YES in retained normal PlanningRun; NO in screenshot Track B request
+SITE_CONTEXT_EVIDENCE_PRODUCED=YES in retained normal PlanningRun; NO in screenshot Track B request
+SITE_CONTEXT_EVIDENCE_PERSISTED=YES in retained normal PlanningRun; NO in screenshot Track B request
+SITE_CONTEXT_REACHED_SYNTHESIS=YES in retained normal PlanningRun; NO in screenshot Track B synthesis
+FRONTEND_RECEIVED_SITE_CONTEXT=NO for screenshot response; YES only in separate retained PlanningRun response
+
+FIRST_FAILURE_BOUNDARY=Track B backend route classification/dispatch after route_question(): site_context is not dispatched to the Planning Agent execution path.
+
+ROOT_CAUSE_CLASSIFICATION=UI_USING_DIFFERENT_EXECUTION_PATH
+ROOT_CAUSE_EVIDENCE=The screenshot button calls TrackBWorkspacePage.runPlannerDecision() and trackBApi.decisionWorkspace(), whose backend fallback calls build_track_b_planner_decision() using the temporal analysis manifest. The current router independently returns capability=site_context and tools=(context.site_surroundings,), while the retained normal PlanningRun has plan=["context.site_surroundings"], 39 persisted items, and completed grounded synthesis. The UI response exposes only the Track B fixed evidence refs and the frontend renders those refs exactly.
+
+8. COMPETITION RISK DECISION
+============================
+FIX_REQUIRED=YES for a unified UI answer that uses site-context evidence.
+FIX_RISK=HIGH_RISK_DO_NOT_TOUCH_BEFORE_COMPETITION
+
+PROPOSED_MINIMAL_FIX=In backend/app/api/v1/track_b.py planner_decision_workspace(), dispatch route.capability == "site_context" through the existing _run_track_b_planning_question() helper using the analysis manifest's Site ID, or provide an explicitly designed site-context-aware Track B decision contract. Do not patch the AI prompt or frontend tags alone; the evidence must be collected through the approved tool and passed through a contract that can represent its provenance.
+
+FILES_THAT_WOULD_CHANGE=backend/app/api/v1/track_b.py; potentially backend/app/schemas/track_b.py and backend/app/services/track_b_ai.py if the Track B response contract is intentionally expanded; frontend/src/lib/api/trackB.ts and frontend/src/pages/TrackBWorkspacePage.tsx only if the response contract/UI is intentionally expanded.
+
+NO_FIX_REQUIRED=NO for site-context-capable normal PlanningRun functionality; that path is already proven completed and grounded.
+
+SAFE_FOR_COMPETITION_DEMO=YES_WITH_SCOPE_LIMITS
+SAFE_DEMO_FEATURES=Demonstrate the existing Track B temporal/change-detection workflow, its deterministic raster/site-geometry evidence, grounded AI decision brief, limitations, provider metadata, provenance-controlled evidence refs, and professional-review boundary. Demonstrate the separate normal PlanningRun site-context result only if the normal PlanningRun UI/path is explicitly selected and its response is visibly confirmed.
+AVOID_DEMO_FEATURES=Do not present the Track B screenshot's decision brief as a nearby-facilities/site-surroundings answer. Do not claim that its raster tags represent OpenStreetMap education evidence. Do not promise that arbitrary site-context questions entered into this Track B decision workspace will query context.site_surroundings until a targeted fix is implemented and tested.
+
+9. SAFETY RECORD
+================
+PRODUCTION_FILES_MODIFIED=NO
+DATABASE_MODIFIED=NO
+PLANNING_RUN_CREATED=NO
+PLANNING_RUN_EXECUTED=NO
+PROVIDER_CALLED=NO
+AI_PROVIDER_CALLED=NO
+CONTAINERS_RESTARTED=NO
+COMMIT_CREATED=NO
+PUSH_PERFORMED=NO
+
+AUDIT_COMPLETE=YES
+FINAL_VERDICT=ROOT_CAUSE_PROVEN_NO_REPAIR_APPLIED

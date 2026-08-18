@@ -52,34 +52,113 @@ export function ProjectsPage() {
   }
 
   return (
-    <section className="workspace-stack">
-      <section className="panel">
-        <p className="eyebrow">Projects</p>
-        <h1>Your planning projects</h1>
-        <form className="stack-form" onSubmit={createProject}>
-          <label>Project name<input value={name} onChange={(e) => setName(e.target.value)} required maxLength={160} /></label>
-          <label>Description<textarea value={description} onChange={(e) => setDescription(e.target.value)} maxLength={5000} /></label>
-          <button type="submit" disabled={busy}>{busy ? "Creating..." : "Create Project"}</button>
-        </form>
-        {error && <div className="status-card status-error" role="alert">{error}</div>}
-      </section>
+    <section className="gp2-projects">
+      <header className="gp2-page-header">
+        <div>
+          <p className="eyebrow">Planning workspace</p>
+          <h1>Projects</h1>
+          <p className="gp2-muted">
+            Select a planning project to continue.
+          </p>
+        </div>
 
-      <section className="panel">
-        <h2>Existing Projects</h2>
-        {loading ? <p>Loading...</p> : projects.length === 0 ? <p>No projects yet.</p> : (
-          <div className="card-list">
+        <span className="gp2-count">
+          {projects.length} {projects.length === 1 ? "PROJECT" : "PROJECTS"}
+        </span>
+      </header>
+
+      {error && (
+        <div className="status-card status-error" role="alert">
+          {error}
+        </div>
+      )}
+
+      <section className="gp2-section">
+        <div className="gp2-section-title">
+          <h2>Existing Projects</h2>
+        </div>
+
+        {loading ? (
+          <div className="gp2-empty">Loading projects...</div>
+        ) : projects.length === 0 ? (
+          <div className="gp2-empty">
+            No projects available yet.
+          </div>
+        ) : (
+          <div className="gp2-project-list">
             {projects.map((project) => (
-              <article className="resource-card" key={project.id}>
-                <div>
-                  <strong>{project.name}</strong>
-                  <p>{project.description || "No description"}</p>
+              <article
+                className="gp2-project-card"
+                key={project.id}
+              >
+                <div className="gp2-project-icon">
+                  GP
                 </div>
-                <Link to={`/projects/${project.id}`}>Open</Link>
+
+                <div className="gp2-project-copy">
+                  <strong>{project.name}</strong>
+
+                  <p>
+                    {project.description ||
+                      "GeoPilot planning workspace"}
+                  </p>
+                </div>
+
+                <Link
+                  className="gp2-primary-link"
+                  to={`/projects/${project.id}`}
+                >
+                  Open
+                  <span aria-hidden="true">→</span>
+                </Link>
               </article>
             ))}
           </div>
         )}
       </section>
+
+      <details className="gp2-details">
+        <summary>
+          <span>
+            <strong>Create new project</strong>
+            <small>Start another planning workspace</small>
+          </span>
+
+          <span aria-hidden="true">+</span>
+        </summary>
+
+        <form
+          className="gp2-form"
+          onSubmit={createProject}
+        >
+          <label>
+            Project name
+            <input
+              value={name}
+              onChange={(event) =>
+                setName(event.target.value)
+              }
+              required
+              maxLength={160}
+            />
+          </label>
+
+          <label>
+            Description
+            <textarea
+              value={description}
+              onChange={(event) =>
+                setDescription(event.target.value)
+              }
+              maxLength={5000}
+            />
+          </label>
+
+          <button type="submit" disabled={busy}>
+            {busy ? "Creating..." : "Create Project"}
+          </button>
+        </form>
+      </details>
     </section>
   );
 }

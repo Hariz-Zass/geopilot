@@ -1,0 +1,11 @@
+============================================================
+GEOPILOT E2E SITE CANDIDATES V2
+============================================================
+
+candidate_count: 2
+PROJECT_ID= f7617e94-7d8c-47d0-8bed-635cf2f48579 | PROJECT= PLAN-Ai 2026 Track B Acceptance Test | SITE_ID= f9cc540f-b611-497e-8a76-edac36ba01d6 | SITE= Rural QA T1 — Rural Challenge Area | active= False | ready_dem= 2
+PROJECT_ID= f7617e94-7d8c-47d0-8bed-635cf2f48579 | PROJECT= PLAN-Ai 2026 Track B Acceptance Test | SITE_ID= 2ea1e98d-347c-4a0a-8e5b-5dd7f9553673 | SITE= Urban QA T1 - Shah Alam Urban Challenge Area | active= False | ready_dem= 3
+
+============================================================
+READ ONLY - NO DB OR RASTER WRITE
+============================================================

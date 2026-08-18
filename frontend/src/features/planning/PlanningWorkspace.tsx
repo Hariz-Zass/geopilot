@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { sitesApi, type SiteResponse } from "../../lib/api/sites";
 import {
@@ -63,7 +63,7 @@ export function PlanningWorkspace({
           setSiteState({
             status: "error",
             message:
-              "The requested Site is not the server-designated active Site for this Project.",
+              "Site yang diminta bukan Site aktif yang ditetapkan pelayan untuk Project ini.",
           });
           return;
         }
@@ -83,7 +83,7 @@ export function PlanningWorkspace({
           message:
             error instanceof Error
               ? error.message
-              : "The active Site could not be loaded.",
+              : "Site aktif tidak dapat dimuatkan.",
         });
       });
 
@@ -139,7 +139,7 @@ export function PlanningWorkspace({
       <header>
         <h1>GeoPilot AI Planning Workspace</h1>
         <p>
-          Project and Site context are required before analysis.
+          Konteks Project dan Site diperlukan sebelum analisis.
         </p>
       </header>
 
@@ -175,7 +175,7 @@ export function PlanningWorkspace({
               onChange={(event) =>
                 setQuestion(event.target.value)
               }
-              placeholder="Ask an evidence-bounded planning question"
+              placeholder="Ask an evidence-grounded planning question"
             />
           </label>
 
@@ -189,13 +189,13 @@ export function PlanningWorkspace({
             }
           >
             {analysisStatus === "running"
-              ? "Running analysis..."
+              ? "Preparing analysis..."
               : "Prepare analysis"}
           </button>
 
           {analysisStatus === "running" && (
             <p role="status">
-              GeoPilot is gathering validated evidence and running the
+              GeoPilot is gathering validated evidence and running
               Planning Officer.
             </p>
           )}
@@ -228,8 +228,8 @@ export function PlanningWorkspace({
                 </div>
               ) : (
                 <p>
-                  No AI synthesis was produced. Validated evidence and
-                  limitations remain available below.
+                  AI synthesis was not produced. Validated evidence and
+                  limitations remain below.
                 </p>
               )}
 
