@@ -41,6 +41,7 @@ export const planningRunsApi = {
     payload: {
       question: string;
       development_intent?: string | null;
+      temporal_evidence?: Record<string, unknown> | null;
     },
     accessToken: string,
   ) =>

@@ -6,6 +6,8 @@ import {
   type TrackBOrganizerImportAllResponse,
   type TrackBOrganizerImportPlan,
   type TrackBOrganizerIntakeReport,
+  type TrackBGisTemporalReport,
+  type TrackBGisTemporalResult,
   type TrackBOrganizerSiteCandidate,
   type TrackBOrganizerSiteDiscovery,
   type TrackBOrganizerSiteResolution,
@@ -15,6 +17,7 @@ type Props = {
   projectId: string;
   token: string;
   onCommitted?: () => void | Promise<void>;
+  onTemporalResult?: (result: TrackBGisTemporalResult | undefined) => void;
 };
 
 const ROLE_OPTIONS = [
@@ -26,6 +29,14 @@ const ROLE_OPTIONS = [
   ["transport_network", "Transport network"],
   ["parcel", "Parcel / cadastral"],
   ["reference", "Reference GIS"],
+] as const;
+
+const TEMPORAL_QUESTIONS = [
+  "What are the biggest verified land-use transitions?",
+  "How much verified area was reclassified?",
+  "What did Tanah Kosong change into?",
+  "How much Hutan changed to Pertanian?",
+  "Apakah perubahan guna tanah utama antara 2023 dan 2024?",
 ] as const;
 
 function errorMessage(error: unknown) {
@@ -40,9 +51,15 @@ function candidateLabel(candidate: TrackBOrganizerSiteCandidate) {
   return `${candidate.logical_name} · ${candidate.candidate_status.replaceAll("_", " ")}`;
 }
 
-export function SmartOrganizerControlledImport({ projectId, token, onCommitted }: Props) {
+export function SmartOrganizerControlledImport({ projectId, token, onCommitted, onTemporalResult }: Props) {
   const [files, setFiles] = useState<File[]>([]);
   const [intake, setIntake] = useState<TrackBOrganizerIntakeReport>();
+  const [temporal, setTemporal] = useState<TrackBGisTemporalReport>();
+  const [temporalResult, setTemporalResult] = useState<TrackBGisTemporalResult>();
+  const [planningAnswer, setPlanningAnswer] = useState<{ synthesis: string | null; limitations: string[]; status: string }>();
+  const [temporalQuestion, setTemporalQuestion] = useState<string>(TEMPORAL_QUESTIONS[0]);
+  const [temporalBusy, setTemporalBusy] = useState<"analysis" | "ai">();
+  const [temporalError, setTemporalError] = useState<string>();
   const [discovery, setDiscovery] = useState<TrackBOrganizerSiteDiscovery>();
   const [selectedCandidate, setSelectedCandidate] = useState("");
   const [siteGeometry, setSiteGeometry] = useState<Record<string, unknown>>();
@@ -73,6 +90,11 @@ export function SmartOrganizerControlledImport({ projectId, token, onCommitted }
   function resetAfterFiles(next: File[]) {
     setFiles(next);
     setIntake(undefined);
+    setTemporal(undefined);
+    setTemporalResult(undefined);
+    setPlanningAnswer(undefined);
+    setTemporalQuestion(TEMPORAL_QUESTIONS[0]);
+    setTemporalError(undefined);
     setDiscovery(undefined);
     setSelectedCandidate("");
     setSiteGeometry(undefined);
@@ -82,6 +104,7 @@ export function SmartOrganizerControlledImport({ projectId, token, onCommitted }
     setCommitResult(undefined);
     setFinalConfirmed(false);
     setError(undefined);
+    onTemporalResult?.(undefined);
   }
 
   async function analyze() {
@@ -95,12 +118,14 @@ export function SmartOrganizerControlledImport({ projectId, token, onCommitted }
     setDryRun(undefined);
     setCommitResult(undefined);
     try {
-      const [nextIntake, nextDiscovery] = await Promise.all([
+      const [nextIntake, nextDiscovery, nextTemporal] = await Promise.all([
         trackBApi.inspectOrganizerPackage(projectId, files, token),
         trackBApi.discoverOrganizerSiteCandidates(projectId, files, token),
+        trackBApi.inspectGisTemporal(projectId, files, token),
       ]);
       setIntake(nextIntake);
       setDiscovery(nextDiscovery);
+      setTemporal(nextTemporal);
 
       const recommendedName = nextDiscovery.recommendation.logical_name;
       const suggested = recommendedName
@@ -118,6 +143,44 @@ export function SmartOrganizerControlledImport({ projectId, token, onCommitted }
       setError(errorMessage(caught));
     } finally {
       setBusy(undefined);
+    }
+  }
+
+  async function runTemporalAnalysis() {
+    if (!files.length || temporal?.pair.pair_status !== "PAIR_COMPATIBLE") {
+      setTemporalError("Choose a compatible GIS temporal pair before running the analysis.");
+      return;
+    }
+    setTemporalBusy("analysis");
+    setTemporalError(undefined);
+    setTemporalResult(undefined);
+    setPlanningAnswer(undefined);
+    try {
+      const nextResult = await trackBApi.analyzeGisTemporalExact(projectId, files, token);
+      setTemporalResult(nextResult);
+      onTemporalResult?.(nextResult);
+    } catch (caught) {
+      setTemporalError(caught instanceof ApiError ? caught.message : "GIS temporal analysis failed. Please retry.");
+    } finally {
+      setTemporalBusy(undefined);
+    }
+  }
+
+  async function askGeoPilot() {
+    if (!temporalResult) return;
+    setTemporalBusy("ai");
+    setTemporalError(undefined);
+    try {
+      setPlanningAnswer(await trackBApi.askGisTemporal(
+        projectId,
+        temporalQuestion,
+        temporalResult as unknown as Record<string, unknown>,
+        token,
+      ));
+    } catch (caught) {
+      setTemporalError(caught instanceof ApiError ? caught.message : "GeoPilot could not prepare a grounded answer. Please retry.");
+    } finally {
+      setTemporalBusy(undefined);
     }
   }
 
@@ -374,6 +437,94 @@ export function SmartOrganizerControlledImport({ projectId, token, onCommitted }
           <button className="analysis-button" type="button" disabled={!finalConfirmed || Boolean(busy) || dryRun.status !== "ready_for_commit"} onClick={() => void runImport(true)}>
             {busy === "commit" ? "Importing…" : "CONFIRM & IMPORT ALL"}
           </button>
+        </div>
+      )}
+
+      {temporal && (
+        <div className="smart-organizer-step smart-organizer-temporal-evidence">
+          <div className="smart-organizer-step-title"><b>GIS</b><span>GIS TEMPORAL EVIDENCE</span></div>
+          <p>Metadata-only inspection. Geometry was not materialized and no database write occurred.</p>
+          <div className="smart-organizer-dataset-grid">
+            {temporal.datasets.filter((item) => item.semantic_domain === "LAND_USE").map((item) => (
+              <article key={item.logical_name} className="smart-organizer-dataset">
+                <strong>{item.logical_name}</strong>
+                <span>{item.semantic_role.replaceAll("_", " ")} · {item.classification_confidence}</span>
+                <small>{item.year_candidates.join(" / ") || "Year review required"} · {item.feature_count ?? "count unavailable"} features</small>
+              </article>
+            ))}
+          </div>
+          <strong>Pair status: {temporal.pair.pair_status.replaceAll("_", " ")}</strong>
+          {temporal.pair.warnings.map((warning) => <small key={warning}>{warning}</small>)}
+          {temporal.pair.block_reasons.map((reason) => <small key={reason} className="smart-organizer-error-text">{reason}</small>)}
+          <div className="smart-organizer-actions">
+            <button
+              className="analysis-button"
+              type="button"
+              disabled={temporal.pair.pair_status !== "PAIR_COMPATIBLE" || !files.length || Boolean(busy) || Boolean(temporalBusy)}
+              onClick={() => void runTemporalAnalysis()}
+            >
+              {temporalBusy === "analysis" ? "Analyzing 2023 → 2024 land-use change…" : "Run GIS Temporal Analysis"}
+            </button>
+            <small>Exact-geometry GIS analysis is explicit and does not run during inspection.</small>
+          </div>
+          {temporalError && <div className="smart-organizer-error"><strong>GIS temporal analysis blocked</strong><span>{temporalError}</span></div>}
+        </div>
+      )}
+
+      {temporalResult && !onTemporalResult && (
+        <div className="smart-organizer-step smart-organizer-temporal-result" aria-live="polite">
+          <div className="smart-organizer-step-title"><b>GIS</b><span>GIS TEMPORAL CHANGE INTELLIGENCE</span></div>
+          <div className="smart-organizer-temporal-pair">
+            <span><small>BEFORE</small><strong>{temporalResult.dataset_pair.before_dataset} · {temporalResult.dataset_pair.before_year}</strong></span>
+            <span><small>AFTER</small><strong>{temporalResult.dataset_pair.after_dataset} · {temporalResult.dataset_pair.after_year}</strong></span>
+          </div>
+          <div className="smart-organizer-mini-grid">
+            <span><strong>{temporalResult.exact_match_count}</strong>exact geometry matches</span>
+            <span><strong>{temporalResult.verified_reclassified_count}</strong>verified reclassified polygons</span>
+            <span><strong>{temporalResult.verified_changed_area_ha.toFixed(3)}</strong>verified reclassified area among exact-geometry matches (ha)</span>
+            <span><strong>{temporalResult.unchanged_count}</strong>unchanged exact matches</span>
+            <span><strong>{temporalResult.unmatched_counts.before}</strong>unmatched before</span>
+            <span><strong>{temporalResult.unmatched_counts.after}</strong>unmatched after</span>
+            <span><strong>{temporalResult.runtime.total_runtime_seconds.toFixed(2)}s</strong>runtime</span>
+            <span><strong>{temporalResult.matching_method}</strong>{temporalResult.confidence} · deterministic</span>
+          </div>
+          <h4>Top Verified Transitions</h4>
+          {temporalResult.top_gtn1_transitions.length ? temporalResult.top_gtn1_transitions.map((transition, index) => (
+            <div className="smart-organizer-transition" key={`${transition.before_category}-${transition.after_category}-${index}`}>
+              <strong>{transition.before_category || "Unclassified"} → {transition.after_category || "Unclassified"}</strong>
+              <span>{transition.feature_count} polygons · {transition.measured_area_ha.toFixed(3)} ha</span>
+            </div>
+          )) : <small>No bounded GTN1 transitions were returned.</small>}
+          <div className="smart-organizer-limitation-card">
+            <strong>Exact-geometry analysis only.</strong>
+            <span>{temporalResult.unmatched_label}</span>
+            {temporalResult.limitations.map((limitation) => <small key={limitation}>{limitation}</small>)}
+          </div>
+          <details className="smart-organizer-provenance">
+            <summary>Provenance and audit metadata</summary>
+            <span>Analysis ID: {temporalResult.analysis_id}</span>
+            <span>Before checksum: {temporalResult.checksums.before.slice(0, 12)}…</span>
+            <span>After checksum: {temporalResult.checksums.after.slice(0, 12)}…</span>
+            <span>Method: {temporalResult.matching_method} · deterministic: {String(temporalResult.deterministic)}</span>
+          </details>
+          <label className="smart-organizer-question">
+            Suggested question
+            <select value={temporalQuestion} onChange={(event) => setTemporalQuestion(event.target.value)} disabled={temporalBusy === "ai"}>
+              {TEMPORAL_QUESTIONS.map((question) => <option key={question} value={question}>{question}</option>)}
+            </select>
+          </label>
+          <button className="neon-button" type="button" disabled={temporalBusy === "ai"} onClick={() => void askGeoPilot()}>
+            {temporalBusy === "ai" ? "Preparing GeoPilot…" : "Ask GeoPilot about this result"}
+          </button>
+          {planningAnswer && <div className="smart-organizer-ai-result"><strong>GeoPilot response · {planningAnswer.status}</strong><span>{planningAnswer.synthesis || "Validated evidence was handed off, but no synthesis was produced."}</span>{planningAnswer.limitations.map((limitation) => <small key={limitation}>{limitation}</small>)}</div>}
+        </div>
+      )}
+
+      {temporalResult && onTemporalResult && (
+        <div className="smart-organizer-step smart-organizer-temporal-result-compact" aria-live="polite">
+          <div className="smart-organizer-step-title"><b>GIS</b><span>GIS RESULT READY</span></div>
+          <strong>{temporalResult.dataset_pair.before_year} → {temporalResult.dataset_pair.after_year} · {temporalResult.confidence}</strong>
+          <small>Detailed GIS Temporal Change Intelligence is displayed in the main workspace.</small>
         </div>
       )}
 

@@ -6,10 +6,13 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { ApiError } from "../lib/api/errors";
 import { sitesApi, type SiteResponse } from "../lib/api/sites";
-import { trackBApi, type TrackBAIInterpretation, type TrackBAnalysis, type TrackBDataset, type TrackBOrganizerIntakeReport, type TrackBPlannerDecision, type TrackBWorkflow, type TrackBReadiness } from "../lib/api/trackB";
+import { trackBApi, type ProjectTemporalAskResponse, type TrackBAIInterpretation, type TrackBAnalysis, type TrackBDataset, type TrackBGisTemporalResult, type TrackBOrganizerIntakeReport, type TrackBPlannerDecision, type TrackBWorkflow, type TrackBReadiness } from "../lib/api/trackB";
 import { type PlanningRunResponse } from "../lib/api/planningRuns";
 import { getSessionAccessToken } from "../lib/auth/session";
 import { SmartOrganizerControlledImport } from "../components/SmartOrganizerControlledImport";
+import { GisTemporalResultDashboard } from "../components/GisTemporalResultDashboard";
+
+type WorkspaceTab = "overview" | "gis" | "satellite" | "ask" | "evidence";
 
 function label(value: unknown) {
   return typeof value === "string" ? value : "—";
@@ -92,6 +95,8 @@ export function TrackBWorkspacePage() {
   const [mode, setMode] = useState<"auto" | "ndvi" | "ndwi" | "ndbi" | "spectral" | "classified">("auto");
   const [threshold, setThreshold] = useState(0.2);
   const [result, setResult] = useState<TrackBAnalysis>();
+  const [gisTemporalResult, setGisTemporalResult] = useState<TrackBGisTemporalResult>();
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("overview");
   const [geojson, setGeojson] = useState<GeoJSON.FeatureCollection>();
   const [aiInsight, setAiInsight] = useState<TrackBAIInterpretation>();
   const [decision, setDecision] = useState<TrackBPlannerDecision>();
@@ -113,6 +118,16 @@ export function TrackBWorkspacePage() {
   // SMART_ORGANIZER_INTAKE_V1
   const [intakeReport, setIntakeReport] = useState<TrackBOrganizerIntakeReport>();
   const [intakeBusy, setIntakeBusy] = useState(false);
+
+  async function askGisTemporalResult(question: string): Promise<ProjectTemporalAskResponse> {
+    if (!projectId || !token || !gisTemporalResult) throw new Error("GIS temporal evidence is not available.");
+    return trackBApi.askGisTemporal(projectId, question, gisTemporalResult as unknown as Record<string, unknown>, token);
+  }
+
+  function handleTemporalResult(nextResult: TrackBGisTemporalResult | undefined) {
+    setGisTemporalResult(nextResult);
+    if (nextResult) setWorkspaceTab("gis");
+  }
 
   const load = useCallback(async () => {
     if (!projectId || !token) return;
@@ -444,7 +459,7 @@ export function TrackBWorkspacePage() {
         </div> : <div className="judge-empty"><strong>{missionReadiness.ready ? "Mission-ready evidence detected." : "Track B evidence is not mission-ready yet."}</strong><span>{missionReadiness.ready ? "Run the full Track B mission below to populate the judge decision deck." : "Register matching Urban and Rural T1/T2 evidence pairs with the same Site and data stage."}</span></div>}
       </section>}
 
-      {serverReadiness && <section className={`acceptance-gate ${serverReadiness.status}`}>
+      {serverReadiness && (workspaceTab === "overview" || workspaceTab === "satellite") && <section className={`acceptance-gate ${serverReadiness.status}`}>
         <div><span className="decision-kicker">COMPETITION ACCEPTANCE GATE</span><h2>{serverReadiness.status.toUpperCase()}</h2><p>{serverReadiness.next_action}</p></div>
         <div className="acceptance-checks">{serverReadiness.checks.map((check) => <article key={check.key} className={check.status}><strong>{check.status === "pass" ? "✓" : check.status === "warn" ? "!" : "×"} {check.label}</strong><span>{check.detail}</span></article>)}</div>
         {!!serverReadiness.blockers.length && <div className="acceptance-blockers"><strong>Blockers</strong>{serverReadiness.blockers.map((item) => <span key={item}>{item}</span>)}</div>}
@@ -458,6 +473,7 @@ export function TrackBWorkspacePage() {
             projectId={projectId}
             token={token}
             onCommitted={load}
+            onTemporalResult={handleTemporalResult}
           />
 
           <section className="smart-intake">
@@ -504,12 +520,22 @@ export function TrackBWorkspacePage() {
           </div>
         </aside>
 
-        <main className="trackb-main-panel">
+        <div className="trackb-main-column">
+        <main className="trackb-main-panel trackb-workspace-content">
           <div className="temporal-preview-strip">
             <article><div><span>T1 · BEFORE</span><small>{datasets.find((d) => d.id === beforeId)?.acquisition_datetime ?? "Select dataset"}</small></div>{beforePreview ? <img src={beforePreview} alt="Before raster quicklook" /> : <div className="preview-placeholder">T1</div>}</article>
             <div className="temporal-arrow"><span>→</span><small>temporal delta</small></div>
             <article><div><span>T2 · AFTER</span><small>{datasets.find((d) => d.id === afterId)?.acquisition_datetime ?? "Select dataset"}</small></div>{afterPreview ? <img src={afterPreview} alt="After raster quicklook" /> : <div className="preview-placeholder">T2</div>}</article>
           </div>
+          {workspaceTab === "satellite" && result && <section className="satellite-map-context" aria-label="Satellite change map context">
+            <div>
+              <span>SATELLITE CHANGE MAP</span>
+              <strong>Detected spectral-change regions</strong>
+              <small>{result.before_datetime?.slice(0, 10) ?? "Before date"} → {result.after_datetime?.slice(0, 10) ?? "After date"}</small>
+            </div>
+            <div className="satellite-map-legend"><span className="satellite-map-swatch" aria-hidden="true" /> <span>Cyan overlay/polygons = detected spectral-change regions</span></div>
+            <p>Spectral change is measured evidence and does not by itself prove land-use change or planning causation.</p>
+          </section>}
           <div className="map-frame">
             <div className="map-hud">
               <span>SPATIAL CHANGE LAYER</span>
@@ -533,20 +559,37 @@ export function TrackBWorkspacePage() {
             {!geojson && <div className="map-empty"><strong>Awaiting spatial change geometry</strong><span>Run temporal intelligence or the full Track B mission to render measured change geometry.</span></div>}
           </div>
 
-          <div className="metric-grid">
-            {(result?.metrics ?? [
-              { key: "change", label: "Changed pixels", value: "—", unit: "%" },
-              { key: "area", label: "Changed area", value: "—", unit: "ha" },
-              { key: "coverage", label: "Usable coverage", value: "—", unit: "%" },
-            ]).slice(0, 4).map((m) => <article key={m.key} className="metric-card"><small>{m.label}</small><strong>{m.value}<em>{m.unit ?? ""}</em></strong></article>)}
-          </div>
+          <nav className="trackb-workspace-tabs" aria-label="Track B workspace views">
+            {([[
+              "overview", "OVERVIEW"], ["gis", "GIS CHANGE"], ["satellite", "SATELLITE"], ["ask", "ASK GEOPILOT"], ["evidence", "EVIDENCE"]] as [WorkspaceTab, string][]).map(([tab, text]) => (
+              <button key={tab} type="button" className={workspaceTab === tab ? "active" : ""} onClick={() => setWorkspaceTab(tab)}>{text}</button>
+            ))}
+          </nav>
 
-          <div className="trackb-bottom-grid">
+          {gisTemporalResult && !["overview", "satellite"].includes(workspaceTab) && <GisTemporalResultDashboard
+            result={gisTemporalResult}
+            view={workspaceTab === "ask" ? "ask" : workspaceTab === "evidence" ? "evidence" : "gis"}
+            onAsk={askGisTemporalResult}
+            onAskTab={() => setWorkspaceTab("ask")}
+          />}
+
+          {(workspaceTab === "overview" || workspaceTab === "satellite") && <section className="raster-temporal-section" aria-label="Raster satellite temporal metrics">
+            <div className="raster-temporal-heading"><div><span>RASTER / SATELLITE TEMPORAL METRICS</span><strong>Pixel-based change evidence</strong></div><small>Separate from GIS vector temporal change</small></div>
+            <div className="metric-grid">
+            {(result?.metrics ?? [
+              { key: "change", label: "Changed pixels", value: "Not run", unit: null },
+              { key: "area", label: "Changed area", value: "Not run", unit: null },
+              { key: "coverage", label: "Usable coverage", value: "Not run", unit: null },
+            ]).slice(0, 4).map((m) => <article key={m.key} className="metric-card"><small>{m.label}</small><strong>{m.value}<em>{m.unit ?? ""}</em></strong></article>)}
+            </div>
+          </section>}
+
+          {(workspaceTab === "overview" || workspaceTab === "satellite") && <div className="trackb-bottom-grid">
             <section className="intel-card ai-copilot-card"><div className="panel-heading compact"><span>AI</span><div><strong>GeoPilot Planning Copilot</strong><small>measurement first · grounded planning intelligence</small></div></div>
-              {!aiInsight ? <><p>{result?.summary ?? "Run temporal analysis first. GeoPilot AI then converts measured satellite change into planner-focused issues, relevance and next actions without inventing spatial values."}</p>{result && <button className="analysis-button ai-run-button" onClick={() => void runAIInterpretation()} disabled={aiBusy}>{aiBusy ? "AI reasoning…" : "Generate planning intelligence"}</button>}</> : <div className="ai-intelligence"><div className="ai-confidence"><span>Grounding</span><strong>{aiInsight.confidence}</strong><small>{aiInsight.provider} · {aiInsight.model}</small></div><h3>{aiInsight.planner_problem}</h3><p>{aiInsight.executive_summary}</p>{aiInsight.insights.map((item, i) => <article className="ai-insight" key={`${item.title}-${i}`}><strong>{item.title}</strong><p>{item.finding}</p><small>PLANNING RELEVANCE</small><p>{item.planning_relevance}</p><small>NEXT MOVE</small><p>{item.recommended_action}</p><div className="ai-evidence-tags">{item.evidence_refs.map((ref) => <code key={ref}>{ref}</code>)}</div></article>)}<div className="ai-next-actions"><strong>Planner action queue</strong>{aiInsight.next_actions.map((x) => <p key={x}>→ {x}</p>)}</div></div>}
+              {!aiInsight ? <><p>{result?.summary ?? (gisTemporalResult ? "Measured GIS temporal evidence is available in the main workspace. Ask GeoPilot about this result there using the grounded project-level evidence handoff." : "Run temporal analysis first. GeoPilot AI then converts measured satellite change into planner-focused issues, relevance and next actions without inventing spatial values.")}</p>{result && <button className="analysis-button ai-run-button" onClick={() => void runAIInterpretation()} disabled={aiBusy}>{aiBusy ? "AI reasoning…" : "Generate planning intelligence"}</button>}</> : <div className="ai-intelligence"><div className="ai-confidence"><span>Grounding</span><strong>{aiInsight.confidence}</strong><small>{aiInsight.provider} · {aiInsight.model}</small></div><h3>{aiInsight.planner_problem}</h3><p>{aiInsight.executive_summary}</p>{aiInsight.insights.map((item, i) => <article className="ai-insight" key={`${item.title}-${i}`}><strong>{item.title}</strong><p>{item.finding}</p><small>PLANNING RELEVANCE</small><p>{item.planning_relevance}</p><small>NEXT MOVE</small><p>{item.recommended_action}</p><div className="ai-evidence-tags">{item.evidence_refs.map((ref) => <code key={ref}>{ref}</code>)}</div></article>)}<div className="ai-next-actions"><strong>Planner action queue</strong>{aiInsight.next_actions.map((x) => <p key={x}>→ {x}</p>)}</div></div>}
               {result && <div className="intel-actions"><div className="method-chip">{result.method}</div>{result.report_url && <button className="report-button" onClick={() => void openEvidenceReport()} disabled={busy}>Evidence PDF</button>}</div>}</section>
             <section className="intel-card"><div className="panel-heading compact"><span>EV</span><div><strong>Evidence Lineage</strong><small>auditable evidence sources</small></div></div>{result ? result.evidence.map((e, i) => <div className="evidence-row" key={i}><span>{String(e.role ?? "source")}</span><code>{String(e.id).slice(0, 12)}…</code></div>) : <p>No analysis evidence yet.</p>}</section>
-          </div>
+          </div>}
 
           {result && <section className="planner-decision-workspace">
             <div className="decision-workspace-head">
@@ -635,6 +678,7 @@ export function TrackBWorkspacePage() {
           {result && <section className="limitations"><strong>Professional review boundary</strong>{result.limitations.map((x) => <p key={x}>• {x}</p>)}</section>}
           {error && <div className="trackb-error" role="alert">{error}</div>}
         </main>
+        </div>
       </div>
 
       <section className="planner-decision-workspace hackathon-simulation">

@@ -14,6 +14,56 @@ export type TrackBOrganizerIntakeReport = {
   blockers:string[]; items:TrackBOrganizerIntakeItem[]; next_action:string;
 };
 
+export type TrackBGisTemporalDataset = {
+  logical_name:string; semantic_role:string; semantic_domain:string; classification_confidence:string;
+  year_candidates:number[]; feature_count?:number|null; geometry_type?:string|null; source_crs?:string|null;
+  schema_fingerprint?:string; source_checksum_sha256?:string; semantic_excluded_from_site_discovery?:boolean;
+  source_members?:string[]; issues?:string[]; database_writes:false;
+};
+export type TrackBGisTemporalReport = {
+  phase:"GIS_TEMPORAL_PHASE_A"; database_writes:false; geometry_not_materialized:true;
+  datasets:TrackBGisTemporalDataset[];
+  pair:{pair_status:string;warnings:string[];block_reasons:string[];database_writes:false};
+};
+
+export type TrackBGisTemporalTransition = {
+  before_category?: string | null;
+  after_category?: string | null;
+  feature_count: number;
+  measured_area_ha: number;
+};
+export type TrackBGisTemporalResult = {
+  analysis_id: string;
+  project_id?: string | null;
+  dataset_pair: { before_dataset: string; after_dataset: string; before_year: number; after_year: number };
+  checksums: { before: string; after: string };
+  feature_counts: { before: number; after: number; staged_before: number; staged_after: number };
+  exact_match_count: number;
+  unchanged_count: number;
+  verified_reclassified_count: number;
+  verified_changed_area_ha: number;
+  unmatched_counts: { before: number; after: number };
+  unmatched_label: string;
+  top_gtn1_transitions: TrackBGisTemporalTransition[];
+  top_gtn2_transitions: TrackBGisTemporalTransition[];
+  top_gtn3_transitions: TrackBGisTemporalTransition[];
+  sample_verified_facts: Array<Record<string, unknown>>;
+  runtime: {
+    staging_before_seconds: number;
+    staging_after_seconds: number;
+    index_seconds: number;
+    exact_match_seconds: number;
+    total_runtime_seconds: number;
+  };
+  matching_method: "EXACT_GEOMETRY";
+  confidence: "VERIFIED";
+  deterministic: true;
+  status: "measured";
+  limitations: string[];
+  source_provenance: Record<string, unknown>;
+  staging_cleanup: Record<string, unknown>;
+};
+
 // SMART_ORGANIZER_PHASE2D1_FRONTEND_TYPES
 export type TrackBOrganizerSiteCandidate = {
   logical_name:string; format:string|null; source_checksum_sha256:string|null;
@@ -164,6 +214,16 @@ export type TrackBWorkflow = {
   stages: TrackBWorkflowStage[]; evidence_policy: string; professional_review_required: boolean;
 };
 
+export type ProjectTemporalAskResponse = {
+  capability: "temporal_land_use_change";
+  question: string;
+  status: "completed" | "degraded";
+  evidence: Array<Record<string, unknown>>;
+  synthesis: string | null;
+  provider_metadata: Record<string, unknown>;
+  limitations: string[];
+};
+
 
 export type TrackBReadinessPair = {
   location_type: "urban" | "rural"; ready: boolean; before_raster_id: string | null; after_raster_id: string | null;
@@ -194,6 +254,37 @@ export const trackBApi = {
       {method:"POST",headers:auth(token),body:form},
     );
   },
+
+  inspectGisTemporal: (projectId:string, files:File[], token:string) => {
+    const form=new FormData(); files.forEach((file)=>form.append("files",file));
+    return apiClient.request<TrackBGisTemporalReport>(
+      `/api/v1/projects/${encodeURIComponent(projectId)}/track-b/gis-temporal/inspect`,
+      {method:"POST",headers:auth(token),body:form},
+    );
+  },
+
+  analyzeGisTemporalExact: (projectId:string, files:File[], token:string) => {
+    const form = new FormData();
+    files.forEach((file) => form.append("files", file));
+    return apiClient.request<TrackBGisTemporalResult>(
+      `/api/v1/projects/${encodeURIComponent(projectId)}/track-b/gis-temporal/exact-analyze`,
+      {method:"POST", headers:auth(token), body:form},
+    );
+  },
+
+  askGisTemporal: (
+    projectId: string,
+    question: string,
+    temporalEvidence: Record<string, unknown>,
+    token: string,
+  ) => apiClient.request<ProjectTemporalAskResponse>(
+    `/api/v1/projects/${encodeURIComponent(projectId)}/track-b/gis-temporal/ask`,
+    {
+      method: "POST",
+      headers: { ...auth(token), "Content-Type": "application/json" },
+      body: JSON.stringify({ question, temporal_evidence: temporalEvidence }),
+    },
+  ),
 
 
   // SMART_ORGANIZER_PHASE2D1_FRONTEND_API
