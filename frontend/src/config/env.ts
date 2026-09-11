@@ -9,24 +9,27 @@ function normalizeBaseUrl(value: string): string {
 }
 
 export function readFrontendEnv(source: ImportMetaEnv = import.meta.env): FrontendEnv {
-  const rawApiBaseUrl = source.VITE_API_BASE_URL?.trim();
-  if (!rawApiBaseUrl) {
-    throw new Error("VITE_API_BASE_URL is required");
-  }
+  // Gunakan /api sebagai fallback jika nilai kosong atau tidak wujud
+  const rawApiBaseUrl = source.VITE_API_BASE_URL?.trim() || "/api";
 
-  let parsed: URL;
-  try {
-    parsed = new URL(rawApiBaseUrl);
-  } catch {
-    throw new Error("VITE_API_BASE_URL must be an absolute URL");
-  }
+  let normalizedUrl = rawApiBaseUrl;
 
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error("VITE_API_BASE_URL must use http or https");
+  // Jika nilai tidak bermula dengan '/', semak sama ada ia valid HTTP/HTTPS URL
+  if (!rawApiBaseUrl.startsWith("/")) {
+    let parsed: URL;
+    try {
+      parsed = new URL(rawApiBaseUrl);
+    } catch {
+      throw new Error("VITE_API_BASE_URL must be an absolute URL or start with /");
+    }
+
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      throw new Error("VITE_API_BASE_URL must use http or https");
+    }
   }
 
   return Object.freeze({
-    apiBaseUrl: normalizeBaseUrl(rawApiBaseUrl),
+    apiBaseUrl: normalizeBaseUrl(normalizedUrl),
     appName: source.VITE_APP_NAME?.trim() || "GeoPilot AI",
     mapStyleUrl: source.VITE_MAP_STYLE_URL?.trim() || "https://demotiles.maplibre.org/style.json",
   });
