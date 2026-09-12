@@ -241,6 +241,14 @@ class VercelBlobArtifactStorage:
                 )
             except httpx.HTTPError as exc:
                 raise ArtifactStorageError("Stored raster artifact is unavailable from Vercel Blob.") from exc
+            # The Blob control-plane URL may return a signed private download URL.
+            # Signed URLs do not require (and can reject) the OIDC bearer header;
+            # retry without it before reporting the object as unavailable.
+            if response.status_code in {401, 403}:
+                try:
+                    response = httpx.get(target, params={"cache": "0"}, timeout=60.0)
+                except httpx.HTTPError as exc:
+                    raise ArtifactStorageError("Stored raster artifact is unavailable from Vercel Blob.") from exc
             if response.status_code == 404:
                 raise ArtifactStorageError("Stored raster artifact is missing.")
             if response.is_error:
