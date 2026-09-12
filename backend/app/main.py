@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import os
+import ctypes
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -10,10 +11,12 @@ from pathlib import Path
 # runtime library when present (local Docker remains unchanged).
 _backend_root = Path(__file__).resolve().parents[1]
 _vendor_lib = _backend_root / ".libs"
-_vendor_explicit = _backend_root / "libexpat.so.1"
-_library_dirs = [str(p) for p in (_vendor_lib, _backend_root) if p.is_dir()]
+_package_lib = Path(__file__).resolve().parent / "libexpat.so.1"
+_library_dirs = [str(p) for p in (_vendor_lib, _backend_root, _package_lib.parent) if p.is_dir()]
 if _library_dirs:
     os.environ["LD_LIBRARY_PATH"] = ":".join(_library_dirs + [os.environ.get("LD_LIBRARY_PATH", "")]).rstrip(":")
+if _package_lib.is_file():
+    ctypes.CDLL(str(_package_lib), mode=ctypes.RTLD_GLOBAL)
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
