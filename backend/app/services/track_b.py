@@ -35,6 +35,12 @@ from app.schemas.site import SiteCreateRequest, ewkt_to_geojson
 from app.services.sites import create_site
 from app.services.isolation import ProjectState, SiteState, resolve_project_scope, resolve_site_scope
 from app.services.rasters import RasterError, get_raster
+from app.services.artifact_storage import (
+    ArtifactStorageError,
+    get_artifact_storage,
+    immutable_key,
+    materialize,
+)
 
 
 class TrackBError(Exception):
@@ -150,20 +156,11 @@ def _create_site_from_extent(
 
 
 def _write_immutable(project_id: uuid.UUID, checksum: str, suffix: str, data: bytes) -> str:
-    root = _storage_root()
-    relative = Path(str(project_id)) / "organizer" / f"{checksum}{suffix}"
-    target = (root / relative).resolve()
-    if root != target and root not in target.parents:
-        raise TrackBError("Raster storage target escaped configured root.")
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if target.exists():
-        if hashlib.sha256(target.read_bytes()).hexdigest() != checksum:
-            raise TrackBError("Existing raster artifact checksum mismatch.")
-    else:
-        temp = target.with_suffix(target.suffix + ".tmp")
-        temp.write_bytes(data)
-        os.replace(temp, target)
-    return f"local://rasters/{relative.as_posix()}"
+    try:
+        key = immutable_key(project_id, "organizer", checksum, suffix)
+        return get_artifact_storage().put(key, data, checksum)
+    except ArtifactStorageError as exc:
+        raise TrackBError(str(exc)) from exc
 
 
 def _local_path(uri: str | None) -> Path:
@@ -477,9 +474,23 @@ def _band_asset(dataset: RasterDataset, band: str) -> tuple[Path, int]:
     return _local_path(dataset.source_uri), dataset.band_names.index(band) + 1
 
 
+def _band_uri(dataset: RasterDataset, band: str) -> tuple[str, str, int]:
+    assets = (dataset.provenance or {}).get("assets") or {}
+    if band in assets:
+        asset = assets[band]
+        return str(asset.get("uri") or ""), str(asset.get("checksum_sha256") or ""), 1
+    if band not in dataset.band_names:
+        raise TrackBError(f"Dataset {dataset.name!r} does not contain required band {band}.")
+    return str(dataset.source_uri or ""), dataset.checksum_sha256, dataset.band_names.index(band) + 1
+
+
 def _read_band(dataset: RasterDataset, band: str, *, categorical: bool = False) -> tuple[np.ndarray, dict]:
-    path, index = _band_asset(dataset, band)
-    with rasterio.open(path) as ds:
+    uri, checksum, index = _band_uri(dataset, band)
+    try:
+        materialized = materialize(uri, checksum, Path(uri).suffix or ".tif")
+    except ArtifactStorageError as exc:
+        raise TrackBError(str(exc)) from exc
+    with materialized as path, rasterio.open(path) as ds:
         max_pixels = get_settings().track_b_max_analysis_pixels
         original_pixels = ds.width * ds.height
         if original_pixels > max_pixels:
@@ -500,8 +511,12 @@ def _read_band(dataset: RasterDataset, band: str, *, categorical: bool = False) 
 def _first_band(dataset: RasterDataset, *, categorical: bool = False) -> tuple[np.ndarray, dict]:
     if (dataset.provenance or {}).get("assets"):
         return _read_band(dataset, dataset.band_names[0], categorical=categorical)
-    path = _local_path(dataset.source_uri)
-    with rasterio.open(path) as ds:
+    uri = str(dataset.source_uri or "")
+    try:
+        materialized = materialize(uri, dataset.checksum_sha256, Path(uri).suffix or ".tif")
+    except ArtifactStorageError as exc:
+        raise TrackBError(str(exc)) from exc
+    with materialized as path, rasterio.open(path) as ds:
         max_pixels = get_settings().track_b_max_analysis_pixels; original_pixels = ds.width * ds.height
         if original_pixels > max_pixels:
             scale = math.sqrt(max_pixels / original_pixels); out_width = max(1, int(ds.width * scale)); out_height = max(1, int(ds.height * scale))
@@ -836,5 +851,4 @@ def artifact_path(project_id: uuid.UUID, analysis_id: uuid.UUID, filename: str) 
     if root != target and root not in target.parents: raise TrackBError("Artifact path escaped configured root.")
     if not target.is_file(): raise TrackBError("Track B artifact not found.")
     return target
-
 

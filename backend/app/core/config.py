@@ -44,6 +44,13 @@ class Settings(BaseSettings):
     auth_issuer: str = Field(default="geopilot-ai", alias="AUTH_ISSUER")
     document_storage_root: str = Field(default="/data/documents", alias="DOCUMENT_STORAGE_ROOT")
     raster_storage_root: str = Field(default="/data/rasters", alias="RASTER_STORAGE_ROOT")
+    artifact_storage_provider: Literal["local", "s3", "vercel_blob"] = Field(default="local", alias="ARTIFACT_STORAGE_PROVIDER")
+    artifact_s3_bucket: str | None = Field(default=None, alias="ARTIFACT_S3_BUCKET")
+    artifact_s3_endpoint_url: str | None = Field(default=None, alias="ARTIFACT_S3_ENDPOINT_URL")
+    artifact_s3_region: str | None = Field(default=None, alias="ARTIFACT_S3_REGION")
+    blob_read_write_token: str | None = Field(default=None, alias="BLOB_READ_WRITE_TOKEN")
+    blob_store_id: str | None = Field(default=None, alias="BLOB_STORE_ID")
+    vercel_oidc_token: str | None = Field(default=None, alias="VERCEL_OIDC_TOKEN")
     raster_upload_max_bytes: int = Field(default=1073741824, ge=1048576, le=4294967296, alias="RASTER_UPLOAD_MAX_BYTES")
     terrain_auto_acquisition_enabled: bool = Field(default=False, alias="TERRAIN_AUTO_ACQUISITION_ENABLED")
     terrain_auto_provider: Literal["copernicus_cdse"] = Field(default="copernicus_cdse", alias="TERRAIN_AUTO_PROVIDER")
@@ -103,6 +110,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-
-
-

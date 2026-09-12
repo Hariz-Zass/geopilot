@@ -1,6 +1,5 @@
 ﻿from __future__ import annotations
 
-import hashlib
 import uuid
 from pathlib import Path
 from typing import Any
@@ -11,7 +10,8 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.models.raster import RasterDataset
 from app.models.user import User
-from app.services.track_b import TrackBError, _local_path, list_track_b_datasets
+from app.services.artifact_storage import ArtifactStorageError, materialize
+from app.services.track_b import TrackBError, list_track_b_datasets
 from app.services.track_b_workflow import _select_pair
 
 
@@ -44,19 +44,17 @@ def _verify_local_assets(dataset: RasterDataset) -> tuple[bool, str]:
             uri = asset.get("uri")
             checksum = asset.get("checksum_sha256")
             try:
-                path = _local_path(uri)
-            except TrackBError as exc:
+                with materialize(str(uri or ""), str(checksum or ""), Path(str(uri or "")).suffix or ".tif"):
+                    pass
+            except ArtifactStorageError as exc:
                 return False, str(exc)
-            if checksum and hashlib.sha256(path.read_bytes()).hexdigest() != checksum:
-                return False, f"Band {band} checksum does not match immutable provenance."
-        return True, f"{len(assets)} local band assets verified."
+        return True, f"{len(assets)} immutable band assets verified."
     try:
-        path = _local_path(dataset.source_uri)
-    except TrackBError as exc:
+        with materialize(str(dataset.source_uri or ""), dataset.checksum_sha256, Path(str(dataset.source_uri or "")).suffix or ".tif"):
+            pass
+    except ArtifactStorageError as exc:
         return False, str(exc)
-    if hashlib.sha256(path.read_bytes()).hexdigest() != dataset.checksum_sha256:
-        return False, "Raster checksum does not match immutable provenance."
-    return True, "Local raster artifact and checksum verified."
+    return True, "Raster artifact and checksum verified."
 
 
 def _pair_payload(datasets: list[RasterDataset], location_type: str) -> tuple[dict[str, Any], list[str]]:
@@ -209,4 +207,3 @@ def assess_track_b_readiness(
         "next_action": next_action,
         "professional_review_required": True,
     }
-
