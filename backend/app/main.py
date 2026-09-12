@@ -1,7 +1,16 @@
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+# Vercel's Python runtime does not ship libexpat, while Rasterio/GDAL loads it
+# at import time. Keep the application portable by preferring the vendored
+# runtime library when present (local Docker remains unchanged).
+_vendor_lib = Path(__file__).resolve().parents[1] / ".libs"
+if _vendor_lib.is_dir():
+    os.environ["LD_LIBRARY_PATH"] = f"{_vendor_lib}:{os.environ.get('LD_LIBRARY_PATH', '')}".rstrip(":")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
