@@ -1,4 +1,4 @@
-﻿from functools import lru_cache
+from functools import lru_cache
 
 from typing import Literal
 
@@ -21,26 +21,12 @@ class Settings(BaseSettings):
     app_version: str = Field(default="0.0.22", alias="APP_VERSION")
     api_v1_prefix: str = Field(default="/api/v1", alias="API_V1_PREFIX")
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
-    cors_origins: tuple[str, ...] = Field(
-        default=("http://localhost:5173",), alias="CORS_ORIGINS"
-    )
-    database_url: str = Field(
-        default="postgresql+psycopg://geopilot:geopilot@db:5432/geopilot",
-        alias="DATABASE_URL",
-    )
-    db_connect_timeout_seconds: int = Field(
-        default=5,
-        ge=1,
-        le=30,
-        alias="DB_CONNECT_TIMEOUT_SECONDS",
-    )
-    auth_jwt_secret: str = Field(
-        default="local-development-change-me-at-least-32-bytes", alias="AUTH_JWT_SECRET"
-    )
+    cors_origins: tuple[str, ...] = Field(default=("http://localhost:5173",), alias="CORS_ORIGINS")
+    database_url: str = Field(default="postgresql+psycopg://geopilot:geopilot@db:5432/geopilot", alias="DATABASE_URL")
+    db_connect_timeout_seconds: int = Field(default=5, ge=1, le=30, alias="DB_CONNECT_TIMEOUT_SECONDS")
+    auth_jwt_secret: str = Field(default="local-development-change-me-at-least-32-bytes", alias="AUTH_JWT_SECRET")
     auth_jwt_algorithm: Literal["HS256"] = Field(default="HS256", alias="AUTH_JWT_ALGORITHM")
-    auth_access_token_minutes: int = Field(
-        default=60, ge=5, le=1440, alias="AUTH_ACCESS_TOKEN_MINUTES"
-    )
+    auth_access_token_minutes: int = Field(default=60, ge=5, le=1440, alias="AUTH_ACCESS_TOKEN_MINUTES")
     auth_issuer: str = Field(default="geopilot-ai", alias="AUTH_ISSUER")
     document_storage_root: str = Field(default="/data/documents", alias="DOCUMENT_STORAGE_ROOT")
     raster_storage_root: str = Field(default="/data/rasters", alias="RASTER_STORAGE_ROOT")
@@ -61,7 +47,6 @@ class Settings(BaseSettings):
     document_upload_max_bytes: int = Field(default=104857600, ge=1024, le=1073741824, alias="DOCUMENT_UPLOAD_MAX_BYTES")
     ai_provider: Literal["ollama", "openai"] = Field(default="ollama", alias="AI_PROVIDER")
     ai_fallback_provider: Literal["ollama", "openai"] | None = Field(default="openai", alias="AI_FALLBACK_PROVIDER")
-
     embedding_provider: Literal["ollama", "openai"] = Field(default="ollama", alias="EMBEDDING_PROVIDER")
     embedding_fallback_provider: Literal["ollama", "openai"] | None = Field(default="openai", alias="EMBEDDING_FALLBACK_PROVIDER")
     embedding_batch_size: int = Field(default=64, ge=1, le=256, alias="EMBEDDING_BATCH_SIZE")
@@ -81,6 +66,12 @@ class Settings(BaseSettings):
             return tuple(item.strip() for item in value.split(",") if item.strip())
         return value
 
+    @field_validator("terrain_auto_provider", mode="before")
+    @classmethod
+    def default_empty_terrain_provider(cls, value: object) -> object:
+        """Treat a blank optional deployment variable as unset."""
+        return "copernicus_cdse" if value is None or (isinstance(value, str) and not value.strip()) else value
+
     @field_validator("auth_jwt_secret")
     @classmethod
     def validate_auth_secret(cls, value: str) -> str:
@@ -91,10 +82,7 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def reject_default_secret_outside_local(self) -> "Settings":
         local_envs = {"local", "development", "dev", "test"}
-        if (
-            self.app_env.lower() not in local_envs
-            and self.auth_jwt_secret == "local-development-change-me-at-least-32-bytes"
-        ):
+        if self.app_env.lower() not in local_envs and self.auth_jwt_secret == "local-development-change-me-at-least-32-bytes":
             raise ValueError("AUTH_JWT_SECRET must be changed outside local/development/test")
         return self
 
